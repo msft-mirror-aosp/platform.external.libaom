@@ -1,5 +1,6 @@
 cc_library_static {
     name: "libaom",
+    host_supported: true,
     vendor_available: true,
     cflags: [
         "-O3",
@@ -56,6 +57,9 @@ cc_library_static {
                 "config/",
                 "config/x86_64/",
             ],
+            cflags: [
+                "-mssse3",
+            ],
             srcs: aom_av1_common_sources +
                 aom_av1_decoder_sources +
                 aom_dsp_common_sources +
@@ -78,6 +82,9 @@ cc_library_static {
             local_include_dirs: [
                 "config/",
                 "config/x86/",
+            ],
+            cflags: [
+                "-mssse3",
             ],
             srcs: aom_av1_common_sources +
                 aom_av1_decoder_sources +
