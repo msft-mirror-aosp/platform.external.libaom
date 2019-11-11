@@ -106,6 +106,10 @@ cc_library_static {
 
     },
 
+    sanitize: {
+        blacklist: "libaom_blacklist.txt",
+    },
+
 }
 
 cc_fuzz {
