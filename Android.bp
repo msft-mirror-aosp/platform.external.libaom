@@ -29,7 +29,10 @@ license {
         "legacy_reciprocal",
         "legacy_unencumbered",
     ],
-    // large-scale-change unable to identify any license_text files
+    license_text: [
+        "libaom/LICENSE",
+        "libaom/PATENTS",
+    ],
 }
 
 aom_av1_common_intrin_avx2 = [
