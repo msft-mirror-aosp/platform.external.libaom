@@ -14,8 +14,9 @@
 #include "config/aom_dsp_rtcd.h"
 
 #include "aom/aom_integer.h"
-#include "aom_dsp/quantize.h"
 #include "aom_dsp/x86/quantize_x86.h"
+
+#include "av1/encoder/av1_quantize.h"
 
 static INLINE void highbd_load_b_values_avx2(
     const int16_t *zbin_ptr, __m256i *zbin, const int16_t *round_ptr,

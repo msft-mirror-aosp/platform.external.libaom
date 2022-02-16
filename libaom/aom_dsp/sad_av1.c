@@ -156,7 +156,6 @@ HIGHBD_MASKSADMXN(16, 64)
 HIGHBD_MASKSADMXN(64, 16)
 #endif  // CONFIG_AV1_HIGHBITDEPTH
 
-#if !CONFIG_REALTIME_ONLY
 // pre: predictor being evaluated
 // wsrc: target weighted prediction (has been *4096 to keep precision)
 // mask: 2d weights (scaled by 4096)
@@ -263,4 +262,3 @@ HIGHBD_OBMCSADMXN(16, 64)
 HIGHBD_OBMCSADMXN(64, 16)
 /* clang-format on */
 #endif  // CONFIG_AV1_HIGHBITDEPTH
-#endif  // !CONFIG_REALTIME_ONLY
