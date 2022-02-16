@@ -26,6 +26,7 @@ typedef struct ConvolveParams {
   int round_1;
   int plane;
   int is_compound;
+  int compound_index;  // 0: the first single in compound mode, 1: the second.
   int use_dist_wtd_comp_avg;
   int fwd_offset;
   int bck_offset;
@@ -58,17 +59,18 @@ void av1_convolve_2d_facade(const uint8_t *src, int src_stride, uint8_t *dst,
                             const InterpFilterParams *interp_filters[2],
                             const int subpel_x_qn, int x_step_q4,
                             const int subpel_y_qn, int y_step_q4, int scaled,
-                            ConvolveParams *conv_params);
+                            ConvolveParams *conv_params,
+                            const struct scale_factors *sf);
 
 static INLINE ConvolveParams get_conv_params_no_round(int cmp_index, int plane,
                                                       CONV_BUF_TYPE *dst,
                                                       int dst_stride,
                                                       int is_compound, int bd) {
   ConvolveParams conv_params;
+  conv_params.compound_index = cmp_index;
   assert(IMPLIES(cmp_index, is_compound));
 
   conv_params.is_compound = is_compound;
-  conv_params.use_dist_wtd_comp_avg = 0;
   conv_params.round_0 = ROUND0_BITS;
   conv_params.round_1 = is_compound ? COMPOUND_ROUND1_BITS
                                     : 2 * FILTER_BITS - conv_params.round_0;
@@ -120,7 +122,7 @@ void av1_highbd_convolve_2d_facade(const uint8_t *src8, int src_stride,
                                    const int subpel_x_qn, int x_step_q4,
                                    const int subpel_y_qn, int y_step_q4,
                                    int scaled, ConvolveParams *conv_params,
-                                   int bd);
+                                   const struct scale_factors *sf, int bd);
 
 // TODO(sarahparker) This will need to be integerized and optimized
 void av1_convolve_2d_sobel_y_c(const uint8_t *src, int src_stride, double *dst,

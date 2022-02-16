@@ -21,6 +21,7 @@
 #include "av1/common/scan.h"
 #include "av1/common/txb_common.h"
 #include "test/acm_random.h"
+#include "test/clear_system_state.h"
 #include "test/register_state_check.h"
 #include "test/util.h"
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
@@ -50,7 +51,7 @@ class BuildCompDiffwtdMaskTest
  public:
   virtual ~BuildCompDiffwtdMaskTest() {}
 
-  virtual void TearDown() {}
+  virtual void TearDown() { libaom_test::ClearSystemState(); }
   void RunTest(buildcompdiffwtdmaskd_func test_impl, const int is_speed,
                const DIFFWTD_MASK_TYPE type);
 
@@ -78,7 +79,7 @@ class BuildCompDiffwtdMaskD16Test
     : public ::testing::TestWithParam<BuildCompDiffwtdMaskD16Param> {
  public:
   ~BuildCompDiffwtdMaskD16Test() {}
-  virtual void TearDown() {}
+  virtual void TearDown() { libaom_test::ClearSystemState(); }
   void SetUp() { rnd_.Reset(ACMRandom::DeterministicSeed()); }
 
  protected:
@@ -87,7 +88,6 @@ class BuildCompDiffwtdMaskD16Test
                     DIFFWTD_MASK_TYPE mask_type);
   libaom_test::ACMRandom rnd_;
 };  // class BuildCompDiffwtdMaskD16Test
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BuildCompDiffwtdMaskD16Test);
 
 void BuildCompDiffwtdMaskD16Test::RunCheckOutput(
     buildcompdiffwtdmaskd16_func test_impl) {
