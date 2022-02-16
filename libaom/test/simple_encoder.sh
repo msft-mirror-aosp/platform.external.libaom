@@ -36,7 +36,7 @@ simple_encoder() {
 
   eval "${AOM_TEST_PREFIX}" "${encoder}" "${codec}" "${YUV_RAW_INPUT_WIDTH}" \
       "${YUV_RAW_INPUT_HEIGHT}" "${YUV_RAW_INPUT}" "${output_file}" 9999 0 5 \
-      ${devnull} || return 1
+      ${devnull}
 
   [ -e "${output_file}" ] || return 1
 }
