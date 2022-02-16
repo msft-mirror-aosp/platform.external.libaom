@@ -91,9 +91,7 @@ sub specialize {
 
 sub add_proto {
   my $fn = splice(@_, -2, 1);
-  my @proto = @_;
-  foreach (@proto) { tr/\t/ / }
-  $ALL_FUNCS{$fn} = \@proto;
+  $ALL_FUNCS{$fn} = \@_;
   specialize $fn, "c";
 }
 

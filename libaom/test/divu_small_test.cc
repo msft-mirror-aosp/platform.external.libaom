@@ -14,7 +14,7 @@
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
 #include "test/acm_random.h"
-#include "aom_dsp/odintrin.h"
+#include "av1/common/odintrin.h"
 
 using libaom_test::ACMRandom;
 
