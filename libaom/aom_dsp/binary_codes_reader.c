@@ -11,6 +11,7 @@
 
 #include "aom_dsp/binary_codes_reader.h"
 #include "aom_dsp/recenter.h"
+#include "av1/common/common.h"
 
 uint16_t aom_read_primitive_quniform_(aom_reader *r,
                                       uint16_t n ACCT_STR_PARAM) {
