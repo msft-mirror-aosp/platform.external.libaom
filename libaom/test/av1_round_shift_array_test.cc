@@ -20,6 +20,7 @@
 #include "aom_ports/aom_timer.h"
 #include "aom_ports/mem.h"
 #include "test/acm_random.h"
+#include "test/clear_system_state.h"
 #include "test/util.h"
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
@@ -42,7 +43,7 @@ class AV1CompRoundShiftTest
   ~AV1CompRoundShiftTest();
 
   void SetUp() { rnd_.Reset(libaom_test::ACMRandom::DeterministicSeed()); }
-  void TearDown() {}
+  void TearDown() { libaom_test::ClearSystemState(); }
 
  protected:
   void RunCheckOutput(comp_round_shift_array_func test_impl, BLOCK_SIZE bsize,
@@ -52,7 +53,6 @@ class AV1CompRoundShiftTest
 
   libaom_test::ACMRandom rnd_;
 };
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AV1CompRoundShiftTest);
 
 AV1CompRoundShiftTest::~AV1CompRoundShiftTest() { ; }
 
