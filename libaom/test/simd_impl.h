@@ -13,6 +13,7 @@
 
 #define SIMD_CHECK 1
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
+#include "test/clear_system_state.h"
 #include "test/register_state_check.h"
 #include "aom_dsp/aom_simd_inline.h"
 #include "aom_dsp/simd/v256_intrinsics_c.h"
@@ -29,7 +30,7 @@ class TestIntrinsic : public ::testing::TestWithParam<param_signature> {
     name = std::get<2>(this->GetParam());
   }
 
-  virtual void TearDown() {}
+  virtual void TearDown() { libaom_test::ClearSystemState(); }
 
  protected:
   uint32_t mask, maskwidth;
