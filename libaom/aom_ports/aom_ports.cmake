@@ -13,14 +13,19 @@ if(AOM_AOM_PORTS_AOM_PORTS_CMAKE_)
 endif() # AOM_AOM_PORTS_AOM_PORTS_CMAKE_
 set(AOM_AOM_PORTS_AOM_PORTS_CMAKE_ 1)
 
-list(APPEND AOM_PORTS_INCLUDES "${AOM_ROOT}/aom_ports/aom_once.h"
-            "${AOM_ROOT}/aom_ports/aom_timer.h" "${AOM_ROOT}/aom_ports/bitops.h"
+list(APPEND AOM_PORTS_INCLUDES
+            "${AOM_ROOT}/aom_ports/aom_once.h"
+            "${AOM_ROOT}/aom_ports/aom_timer.h"
+            "${AOM_ROOT}/aom_ports/bitops.h"
             "${AOM_ROOT}/aom_ports/emmintrin_compat.h"
-            "${AOM_ROOT}/aom_ports/mem.h" "${AOM_ROOT}/aom_ports/mem_ops.h"
+            "${AOM_ROOT}/aom_ports/mem.h"
+            "${AOM_ROOT}/aom_ports/mem_ops.h"
             "${AOM_ROOT}/aom_ports/mem_ops_aligned.h"
-            "${AOM_ROOT}/aom_ports/msvc.h" "${AOM_ROOT}/aom_ports/sanitizer.h")
+            "${AOM_ROOT}/aom_ports/msvc.h"
+            "${AOM_ROOT}/aom_ports/sanitizer.h"
+            "${AOM_ROOT}/aom_ports/system_state.h")
 
-list(APPEND AOM_PORTS_ASM_X86 "${AOM_ROOT}/aom_ports/float.asm")
+list(APPEND AOM_PORTS_ASM_X86 "${AOM_ROOT}/aom_ports/emms.asm")
 
 list(APPEND AOM_PORTS_INCLUDES_X86 "${AOM_ROOT}/aom_ports/x86_abi_support.asm")
 
@@ -43,7 +48,7 @@ list(APPEND AOM_PORTS_SOURCES_PPC "${AOM_ROOT}/aom_ports/ppc.h"
 #
 # * The libaom target must exist before this function is called.
 function(setup_aom_ports_targets)
-  if(WIN32 AND "${AOM_TARGET_CPU}" STREQUAL "x86_64")
+  if("${AOM_TARGET_CPU}" MATCHES "^x86")
     add_asm_library("aom_ports" "AOM_PORTS_ASM_X86")
     set(aom_ports_has_symbols 1)
   elseif("${AOM_TARGET_CPU}" MATCHES "arm")
@@ -64,7 +69,8 @@ function(setup_aom_ports_targets)
   if(aom_ports_has_symbols)
     target_sources(aom_ports PRIVATE ${AOM_PORTS_INCLUDES})
 
-    if("${AOM_TARGET_CPU}" STREQUAL "x86_64")
+    if("${AOM_TARGET_CPU}" STREQUAL "x86"
+       OR "${AOM_TARGET_CPU}" STREQUAL "x86_64")
       target_sources(aom_ports PRIVATE ${AOM_PORTS_INCLUDES_X86})
     endif()
 
