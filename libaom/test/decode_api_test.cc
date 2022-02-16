@@ -13,13 +13,14 @@
 
 #include "config/aom_config.h"
 
+#include "test/util.h"
 #include "aom/aomdx.h"
 #include "aom/aom_decoder.h"
 
 namespace {
 
 TEST(DecodeAPI, InvalidParams) {
-  static aom_codec_iface_t *kCodecs[] = {
+  static const aom_codec_iface_t *kCodecs[] = {
 #if CONFIG_AV1_DECODER
     aom_codec_av1_dx(),
 #endif
@@ -37,9 +38,8 @@ TEST(DecodeAPI, InvalidParams) {
             aom_codec_decode(NULL, NULL, sizeof(buf), NULL));
   EXPECT_EQ(AOM_CODEC_INVALID_PARAM, aom_codec_destroy(NULL));
   EXPECT_TRUE(aom_codec_error(NULL) != NULL);
-  EXPECT_TRUE(aom_codec_error_detail(NULL) == NULL);
 
-  for (aom_codec_iface_t *iface : kCodecs) {
+  for (const aom_codec_iface_t *iface : kCodecs) {
     EXPECT_EQ(AOM_CODEC_INVALID_PARAM,
               aom_codec_dec_init(NULL, iface, NULL, 0));
 
