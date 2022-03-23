@@ -17,6 +17,7 @@
 #include "av1/encoder/encoder.h"
 #include "av1/encoder/pustats.h"
 #include "av1/encoder/rdopt_utils.h"
+#include "aom_ports/system_state.h"
 #include "config/aom_dsp_rtcd.h"
 
 #ifdef __cplusplus
@@ -133,6 +134,7 @@ static AOM_INLINE void model_rd_with_curvfit(const AV1_COMP *const cpi,
     if (dist) *dist = 0;
     return;
   }
+  aom_clear_system_state();
   const double sse_norm = (double)sse / num_samples;
   const double qstepsqr = (double)qstep * qstep;
   const double xqr = log2(sse_norm / qstepsqr);
@@ -143,6 +145,7 @@ static AOM_INLINE void model_rd_with_curvfit(const AV1_COMP *const cpi,
   const double dist_f = dist_by_sse_norm_f * sse_norm;
   int rate_i = (int)(AOMMAX(0.0, rate_f * num_samples) + 0.5);
   int64_t dist_i = (int64_t)(AOMMAX(0.0, dist_f * num_samples) + 0.5);
+  aom_clear_system_state();
 
   // Check if skip is better
   if (rate_i == 0) {
