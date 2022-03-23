@@ -36,7 +36,7 @@ simple_decoder() {
   fi
 
   eval "${AOM_TEST_PREFIX}" "${decoder}" "${input_file}" "${output_file}" \
-      ${devnull} || return 1
+      ${devnull}
 
   [ -e "${output_file}" ] || return 1
 }

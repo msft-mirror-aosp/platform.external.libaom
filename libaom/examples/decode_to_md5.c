@@ -77,8 +77,10 @@ void usage_exit(void) {
 int main(int argc, char **argv) {
   int frame_cnt = 0;
   FILE *outfile = NULL;
+  aom_codec_ctx_t codec;
   AvxVideoReader *reader = NULL;
   const AvxVideoInfo *info = NULL;
+  const AvxInterface *decoder = NULL;
 
   exec_name = argv[0];
 
@@ -92,14 +94,13 @@ int main(int argc, char **argv) {
 
   info = aom_video_reader_get_info(reader);
 
-  aom_codec_iface_t *decoder = get_aom_decoder_by_fourcc(info->codec_fourcc);
+  decoder = get_aom_decoder_by_fourcc(info->codec_fourcc);
   if (!decoder) die("Unknown input codec.");
 
-  printf("Using %s\n", aom_codec_iface_name(decoder));
+  printf("Using %s\n", aom_codec_iface_name(decoder->codec_interface()));
 
-  aom_codec_ctx_t codec;
-  if (aom_codec_dec_init(&codec, decoder, NULL, 0))
-    die("Failed to initialize decoder");
+  if (aom_codec_dec_init(&codec, decoder->codec_interface(), NULL, 0))
+    die_codec(&codec, "Failed to initialize decoder");
 
   while (aom_video_reader_read_frame(reader)) {
     aom_codec_iter_t iter = NULL;
@@ -115,7 +116,7 @@ int main(int argc, char **argv) {
 
       get_image_md5(img, digest);
       print_md5(outfile, digest);
-      fprintf(outfile, "  img-%ux%u-%04d.i420\n", img->d_w, img->d_h,
+      fprintf(outfile, "  img-%dx%d-%04d.i420\n", img->d_w, img->d_h,
               ++frame_cnt);
     }
   }
