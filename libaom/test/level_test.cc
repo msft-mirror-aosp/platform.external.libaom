@@ -42,10 +42,14 @@ class LevelTest
   virtual ~LevelTest() {}
 
   virtual void SetUp() {
-    InitializeConfig(encoding_mode_);
+    InitializeConfig();
+    SetMode(encoding_mode_);
     if (encoding_mode_ != ::libaom_test::kRealTime) {
       cfg_.g_lag_in_frames = 5;
+      cfg_.rc_end_usage = AOM_VBR;
     } else {
+      cfg_.g_lag_in_frames = 0;
+      cfg_.rc_end_usage = AOM_CBR;
       cfg_.rc_buf_sz = 1000;
       cfg_.rc_buf_initial_sz = 500;
       cfg_.rc_buf_optimal_sz = 600;
@@ -76,7 +80,7 @@ class LevelTest
 };
 
 TEST_P(LevelTest, TestTargetLevelApi) {
-  static aom_codec_iface_t *codec = aom_codec_av1_cx();
+  static const aom_codec_iface_t *codec = &aom_codec_av1_cx_algo;
   aom_codec_ctx_t enc;
   aom_codec_enc_cfg_t cfg;
   EXPECT_EQ(AOM_CODEC_OK, aom_codec_enc_config_default(codec, &cfg, 0));
@@ -117,7 +121,6 @@ TEST_P(LevelTest, TestLevelMonitoringLowBitrate) {
                                        30, 1, 0, 40);
     target_level_ = kLevelKeepStats;
     cfg_.rc_target_bitrate = 1000;
-    cfg_.g_limit = 40;
     ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
     ASSERT_EQ(level_[0], 0);
   }
@@ -130,9 +133,8 @@ TEST_P(LevelTest, TestLevelMonitoringHighBitrate) {
                                        30, 1, 0, 40);
     target_level_ = kLevelKeepStats;
     cfg_.rc_target_bitrate = 4000;
-    cfg_.g_limit = 40;
     ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
-    ASSERT_EQ(level_[0], 4);
+    ASSERT_EQ(level_[0], 1);
   }
 }
 
@@ -149,8 +151,7 @@ TEST_P(LevelTest, TestTargetLevel0) {
   }
 }
 
-AV1_INSTANTIATE_TEST_SUITE(LevelTest,
-                           ::testing::Values(::libaom_test::kTwoPassGood,
-                                             ::libaom_test::kOnePassGood),
-                           ::testing::ValuesIn(kCpuUsedVectors));
+AV1_INSTANTIATE_TEST_CASE(LevelTest,
+                          ::testing::Values(::libaom_test::kTwoPassGood),
+                          ::testing::ValuesIn(kCpuUsedVectors));
 }  // namespace
