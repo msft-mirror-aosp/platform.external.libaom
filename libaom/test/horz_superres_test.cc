@@ -39,8 +39,7 @@ typedef struct {
   unsigned int profile;
   unsigned int limit;
   unsigned int screen_content;
-  double psnr_threshold;   // used by modes other than AOM_SUPERRES_AUTO
-  double psnr_threshold2;  // used by AOM_SUPERRES_AUTO
+  double psnr_threshold;
 } TestVideoParam;
 
 std::ostream &operator<<(std::ostream &os, const TestVideoParam &test_arg) {
@@ -52,21 +51,18 @@ std::ostream &operator<<(std::ostream &os, const TestVideoParam &test_arg) {
 }
 
 const TestVideoParam kTestVideoVectors[] = {
-  { "park_joy_90p_8_420.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 5, 0, 25.4,
-    45.0 },
+  { "park_joy_90p_8_420.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 5, 0, 25.5 },
 #if CONFIG_AV1_HIGHBITDEPTH
-  { "park_joy_90p_10_444.y4m", AOM_IMG_FMT_I44416, AOM_BITS_10, 1, 5, 0, 27.0,
-    48.0 },
+  { "park_joy_90p_10_444.y4m", AOM_IMG_FMT_I44416, AOM_BITS_10, 1, 5, 0, 28.0 },
 #endif
-  { "screendata.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 4, 1, 23.0, 56.0 },
+  { "screendata.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 4, 1, 20.0 },
   // Image coding (single frame).
-  { "niklas_1280_720_30.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 1, 0, 32.0,
-    49.0 },
+  { "niklas_1280_720_30.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 1, 0, 32.0 },
 };
 
 // Modes with extra params have their own tests.
-const aom_superres_mode kSuperresModesWithoutParams[] = { AOM_SUPERRES_RANDOM,
-                                                          AOM_SUPERRES_AUTO };
+const SUPERRES_MODE kSuperresModesWithoutParams[] = { SUPERRES_RANDOM,
+                                                      SUPERRES_AUTO };
 
 // Superres denominators and superres kf denominators to be tested
 typedef tuple<int, int> SuperresDenominatorPair;
@@ -88,8 +84,7 @@ const SuperresQThresholdPair kSuperresQThresholds[] = {
 
 // Test parameter list:
 //  <[needed for EncoderTest], test_video_param_, superres_mode_>
-typedef tuple<const libaom_test::CodecFactory *, TestVideoParam,
-              aom_superres_mode>
+typedef tuple<const libaom_test::CodecFactory *, TestVideoParam, SUPERRES_MODE>
     HorzSuperresTestParam;
 
 class HorzSuperresEndToEndTest
@@ -103,7 +98,8 @@ class HorzSuperresEndToEndTest
   virtual ~HorzSuperresEndToEndTest() {}
 
   virtual void SetUp() {
-    InitializeConfig(::libaom_test::kTwoPassGood);
+    InitializeConfig();
+    SetMode(::libaom_test::kTwoPassGood);
     cfg_.g_lag_in_frames = 5;
     cfg_.rc_end_usage = AOM_Q;
     cfg_.rc_target_bitrate = kBitrate;
@@ -161,17 +157,16 @@ class HorzSuperresEndToEndTest
     ASSERT_TRUE(video.get() != NULL);
 
     ASSERT_NO_FATAL_FAILURE(RunLoop(video.get()));
-    const double psnr_thresh = (superres_mode_ == AOM_SUPERRES_AUTO)
-                                   ? test_video_param_.psnr_threshold2
-                                   : test_video_param_.psnr_threshold;
     const double psnr = GetAveragePsnr();
-    EXPECT_GT(psnr, psnr_thresh);
+    EXPECT_GT(psnr, test_video_param_.psnr_threshold)
+        << "superres_mode_ = " << superres_mode_;
 
-    EXPECT_EQ(test_video_param_.limit, frame_count_);
+    EXPECT_EQ(test_video_param_.limit, frame_count_)
+        << "superres_mode_ = " << superres_mode_;
   }
 
   TestVideoParam test_video_param_;
-  aom_superres_mode superres_mode_;
+  SUPERRES_MODE superres_mode_;
 
  private:
   double psnr_;
@@ -180,9 +175,9 @@ class HorzSuperresEndToEndTest
 
 TEST_P(HorzSuperresEndToEndTest, HorzSuperresEndToEndPSNRTest) { DoTest(); }
 
-AV1_INSTANTIATE_TEST_SUITE(HorzSuperresEndToEndTest,
-                           ::testing::ValuesIn(kTestVideoVectors),
-                           ::testing::ValuesIn(kSuperresModesWithoutParams));
+AV1_INSTANTIATE_TEST_CASE(HorzSuperresEndToEndTest,
+                          ::testing::ValuesIn(kTestVideoVectors),
+                          ::testing::ValuesIn(kSuperresModesWithoutParams));
 
 // Test parameter list:
 //  <[needed for EncoderTest], test_video_param_, tuple(superres_denom_,
@@ -197,7 +192,7 @@ class HorzSuperresFixedEndToEndTest
  protected:
   HorzSuperresFixedEndToEndTest()
       : EncoderTest(GET_PARAM(0)), test_video_param_(GET_PARAM(1)),
-        superres_mode_(AOM_SUPERRES_FIXED), psnr_(0.0), frame_count_(0) {
+        superres_mode_(SUPERRES_FIXED), psnr_(0.0), frame_count_(0) {
     SuperresDenominatorPair denoms = GET_PARAM(2);
     superres_denom_ = std::get<0>(denoms);
     superres_kf_denom_ = std::get<1>(denoms);
@@ -206,7 +201,8 @@ class HorzSuperresFixedEndToEndTest
   virtual ~HorzSuperresFixedEndToEndTest() {}
 
   virtual void SetUp() {
-    InitializeConfig(::libaom_test::kTwoPassGood);
+    InitializeConfig();
+    SetMode(::libaom_test::kTwoPassGood);
     cfg_.g_lag_in_frames = 5;
     cfg_.rc_end_usage = AOM_VBR;
     cfg_.rc_target_bitrate = kBitrate;
@@ -279,7 +275,7 @@ class HorzSuperresFixedEndToEndTest
   }
 
   TestVideoParam test_video_param_;
-  aom_superres_mode superres_mode_;
+  SUPERRES_MODE superres_mode_;
   int superres_denom_;
   int superres_kf_denom_;
 
@@ -290,9 +286,9 @@ class HorzSuperresFixedEndToEndTest
 
 TEST_P(HorzSuperresFixedEndToEndTest, HorzSuperresFixedTestParam) { DoTest(); }
 
-AV1_INSTANTIATE_TEST_SUITE(HorzSuperresFixedEndToEndTest,
-                           ::testing::ValuesIn(kTestVideoVectors),
-                           ::testing::ValuesIn(kSuperresDenominators));
+AV1_INSTANTIATE_TEST_CASE(HorzSuperresFixedEndToEndTest,
+                          ::testing::ValuesIn(kTestVideoVectors),
+                          ::testing::ValuesIn(kSuperresDenominators));
 
 // Test parameter list:
 //  <[needed for EncoderTest], test_video_param_,
@@ -307,7 +303,7 @@ class HorzSuperresQThreshEndToEndTest
  protected:
   HorzSuperresQThreshEndToEndTest()
       : EncoderTest(GET_PARAM(0)), test_video_param_(GET_PARAM(1)),
-        superres_mode_(AOM_SUPERRES_QTHRESH), psnr_(0.0), frame_count_(0) {
+        superres_mode_(SUPERRES_QTHRESH), psnr_(0.0), frame_count_(0) {
     SuperresQThresholdPair qthresholds = GET_PARAM(2);
     superres_qthresh_ = std::get<0>(qthresholds);
     superres_kf_qthresh_ = std::get<1>(qthresholds);
@@ -316,7 +312,8 @@ class HorzSuperresQThreshEndToEndTest
   virtual ~HorzSuperresQThreshEndToEndTest() {}
 
   virtual void SetUp() {
-    InitializeConfig(::libaom_test::kTwoPassGood);
+    InitializeConfig();
+    SetMode(::libaom_test::kTwoPassGood);
     cfg_.g_lag_in_frames = 5;
     cfg_.rc_end_usage = AOM_VBR;
     cfg_.rc_target_bitrate = kBitrate;
@@ -389,7 +386,7 @@ class HorzSuperresQThreshEndToEndTest
   }
 
   TestVideoParam test_video_param_;
-  aom_superres_mode superres_mode_;
+  SUPERRES_MODE superres_mode_;
   int superres_qthresh_;
   int superres_kf_qthresh_;
 
@@ -402,8 +399,8 @@ TEST_P(HorzSuperresQThreshEndToEndTest, HorzSuperresQThreshEndToEndPSNRTest) {
   DoTest();
 }
 
-AV1_INSTANTIATE_TEST_SUITE(HorzSuperresQThreshEndToEndTest,
-                           ::testing::ValuesIn(kTestVideoVectors),
-                           ::testing::ValuesIn(kSuperresQThresholds));
+AV1_INSTANTIATE_TEST_CASE(HorzSuperresQThreshEndToEndTest,
+                          ::testing::ValuesIn(kTestVideoVectors),
+                          ::testing::ValuesIn(kSuperresQThresholds));
 
 }  // namespace
