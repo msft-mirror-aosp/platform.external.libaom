@@ -20,6 +20,7 @@
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "test/acm_random.h"
 #include "test/util.h"
+#include "test/clear_system_state.h"
 #include "test/register_state_check.h"
 
 #include "av1/common/mv.h"
