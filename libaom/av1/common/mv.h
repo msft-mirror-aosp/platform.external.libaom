@@ -12,8 +12,6 @@
 #ifndef AOM_AV1_COMMON_MV_H_
 #define AOM_AV1_COMMON_MV_H_
 
-#include <stdlib.h>
-
 #include "av1/common/common.h"
 #include "av1/common/common_data.h"
 #include "aom_dsp/aom_filter.h"
