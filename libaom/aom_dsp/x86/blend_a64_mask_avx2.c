@@ -870,7 +870,7 @@ void aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride,
                              const uint8_t *src0, uint32_t src0_stride,
                              const uint8_t *src1, uint32_t src1_stride,
                              const uint8_t *mask, uint32_t mask_stride, int w,
-                             int h, int subw, int subh) {
+                             int h, int subx, int suby) {
   assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
   assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
 
@@ -881,15 +881,15 @@ void aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride,
 
   if (UNLIKELY((h | w) & 3)) {  // if (w <= 2 || h <= 2)
     aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
-                         mask, mask_stride, w, h, subw, subh);
+                         mask, mask_stride, w, h, subx, suby);
   } else {
-    if (subw & subh) {
+    if (subx & suby) {
       blend_a64_mask_sx_sy_avx2(dst, dst_stride, src0, src0_stride, src1,
                                 src1_stride, mask, mask_stride, w, h);
-    } else if (subw) {
+    } else if (subx) {
       blend_a64_mask_sx_avx2(dst, dst_stride, src0, src0_stride, src1,
                              src1_stride, mask, mask_stride, w, h);
-    } else if (subh) {
+    } else if (suby) {
       blend_a64_mask_sy_avx2(dst, dst_stride, src0, src0_stride, src1,
                              src1_stride, mask, mask_stride, w, h);
     } else {
@@ -899,7 +899,6 @@ void aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride,
   }
 }
 
-#if CONFIG_AV1_HIGHBITDEPTH
 //////////////////////////////////////////////////////////////////////////////
 // aom_highbd_blend_a64_d16_mask_avx2()
 //////////////////////////////////////////////////////////////////////////////
@@ -1371,4 +1370,3 @@ void aom_highbd_blend_a64_d16_mask_avx2(
                                     subh, conv_params, bd);
   }
 }
-#endif  // CONFIG_AV1_HIGHBITDEPTH

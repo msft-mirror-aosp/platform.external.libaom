@@ -11,9 +11,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 set(REQUIRED_ARGS "AOM_ROOT" "AOM_CONFIG_DIR" "CMAKE_INSTALL_PREFIX"
-                  "CMAKE_INSTALL_BINDIR" "CMAKE_INSTALL_INCLUDEDIR"
-                  "CMAKE_INSTALL_LIBDIR" "CMAKE_PROJECT_NAME"
-                  "CONFIG_MULTITHREAD" "HAVE_PTHREAD_H")
+    "CMAKE_INSTALL_BINDIR" "CMAKE_INSTALL_INCLUDEDIR" "CMAKE_INSTALL_LIBDIR"
+    "CMAKE_PROJECT_NAME" "CONFIG_MULTITHREAD" "HAVE_PTHREAD_H")
 
 foreach(arg ${REQUIRED_ARGS})
   if("${${arg}}" STREQUAL "")
@@ -48,8 +47,9 @@ file(APPEND "${pkgconfig_file}" "includedir=\${prefix}/${includedir}\n")
 file(APPEND "${pkgconfig_file}" "libdir=\${exec_prefix}/${libdir}\n\n")
 file(APPEND "${pkgconfig_file}" "Name: ${pkg_name}\n")
 file(
-  APPEND "${pkgconfig_file}"
-  "Description: Alliance for Open Media AV1 codec library v${aom_version}.\n")
+  APPEND
+    "${pkgconfig_file}"
+    "Description: Alliance for Open Media AV1 codec library v${aom_version}.\n")
 file(APPEND "${pkgconfig_file}" "Version: ${package_version}\n")
 file(APPEND "${pkgconfig_file}" "Requires:\n")
 file(APPEND "${pkgconfig_file}" "Conflicts:\n")

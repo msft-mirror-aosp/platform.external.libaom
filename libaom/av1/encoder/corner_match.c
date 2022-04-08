@@ -15,7 +15,6 @@
 
 #include "config/av1_rtcd.h"
 
-#include "aom_ports/system_state.h"
 #include "av1/encoder/corner_match.h"
 
 #define SEARCH_SZ 9
@@ -45,9 +44,9 @@ static double compute_variance(unsigned char *im, int stride, int x, int y) {
    correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
    of each image, centered at (x1, y1) and (x2, y2) respectively.
 */
-double av1_compute_cross_correlation_c(unsigned char *im1, int stride1, int x1,
-                                       int y1, unsigned char *im2, int stride2,
-                                       int x2, int y2) {
+double compute_cross_correlation_c(unsigned char *im1, int stride1, int x1,
+                                   int y1, unsigned char *im2, int stride2,
+                                   int x2, int y2) {
   int v1, v2;
   int sum1 = 0;
   int sum2 = 0;
@@ -66,7 +65,6 @@ double av1_compute_cross_correlation_c(unsigned char *im1, int stride1, int x1,
     }
   var2 = sumsq2 * MATCH_SZ_SQ - sum2 * sum2;
   cov = cross * MATCH_SZ_SQ - sum1 * sum2;
-  aom_clear_system_state();
   return cov / sqrt((double)var2);
 }
 
@@ -101,7 +99,7 @@ static void improve_correspondence(unsigned char *frm, unsigned char *ref,
                                   correspondences[i].rx + x,
                                   correspondences[i].ry + y, width, height))
           continue;
-        match_ncc = av1_compute_cross_correlation(
+        match_ncc = compute_cross_correlation(
             frm, frm_stride, correspondences[i].x, correspondences[i].y, ref,
             ref_stride, correspondences[i].rx + x, correspondences[i].ry + y);
         if (match_ncc > best_match_ncc) {
@@ -127,7 +125,7 @@ static void improve_correspondence(unsigned char *frm, unsigned char *ref,
                 correspondences[i].x + x, correspondences[i].y + y,
                 correspondences[i].rx, correspondences[i].ry, width, height))
           continue;
-        match_ncc = av1_compute_cross_correlation(
+        match_ncc = compute_cross_correlation(
             ref, ref_stride, correspondences[i].rx, correspondences[i].ry, frm,
             frm_stride, correspondences[i].x + x, correspondences[i].y + y);
         if (match_ncc > best_match_ncc) {
@@ -141,11 +139,11 @@ static void improve_correspondence(unsigned char *frm, unsigned char *ref,
   }
 }
 
-int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
-                                 int num_frm_corners, unsigned char *ref,
-                                 int *ref_corners, int num_ref_corners,
-                                 int width, int height, int frm_stride,
-                                 int ref_stride, int *correspondence_pts) {
+int determine_correspondence(unsigned char *frm, int *frm_corners,
+                             int num_frm_corners, unsigned char *ref,
+                             int *ref_corners, int num_ref_corners, int width,
+                             int height, int frm_stride, int ref_stride,
+                             int *correspondence_pts) {
   // TODO(sarahparker) Improve this to include 2-way match
   int i, j;
   Correspondence *correspondences = (Correspondence *)correspondence_pts;
@@ -166,7 +164,7 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
                                 ref_corners[2 * j], ref_corners[2 * j + 1],
                                 width, height))
         continue;
-      match_ncc = av1_compute_cross_correlation(
+      match_ncc = compute_cross_correlation(
           frm, frm_stride, frm_corners[2 * i], frm_corners[2 * i + 1], ref,
           ref_stride, ref_corners[2 * j], ref_corners[2 * j + 1]);
       if (match_ncc > best_match_ncc) {
@@ -175,8 +173,7 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
       }
     }
     // Note: We want to test if the best correlation is >= THRESHOLD_NCC,
-    // but need to account for the normalization in
-    // av1_compute_cross_correlation.
+    // but need to account for the normalization in compute_cross_correlation.
     template_norm = compute_variance(frm, frm_stride, frm_corners[2 * i],
                                      frm_corners[2 * i + 1]);
     if (best_match_ncc > THRESHOLD_NCC * sqrt(template_norm)) {

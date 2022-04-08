@@ -28,14 +28,12 @@ static INLINE int64_t summary_all_sse4(const __m128i *sum_all) {
   return sum;
 }
 
-#if CONFIG_AV1_HIGHBITDEPTH
 static INLINE void summary_32_sse4(const __m128i *sum32, __m128i *sum64) {
   const __m128i sum0 = _mm_cvtepu32_epi64(*sum32);
   const __m128i sum1 = _mm_cvtepu32_epi64(_mm_srli_si128(*sum32, 8));
   *sum64 = _mm_add_epi64(sum0, *sum64);
   *sum64 = _mm_add_epi64(sum1, *sum64);
 }
-#endif
 
 static INLINE void sse_w16_sse4_1(__m128i *sum, const uint8_t *a,
                                   const uint8_t *b) {
@@ -51,8 +49,9 @@ static INLINE void sse_w16_sse4_1(__m128i *sum, const uint8_t *a,
   *sum = _mm_add_epi32(*sum, _mm_madd_epi16(v_d01_w, v_d01_w));
 }
 
-static INLINE void sse4x2_sse4_1(const uint8_t *a, int a_stride,
-                                 const uint8_t *b, int b_stride, __m128i *sum) {
+static INLINE void aom_sse4x2_sse4_1(const uint8_t *a, int a_stride,
+                                     const uint8_t *b, int b_stride,
+                                     __m128i *sum) {
   const __m128i v_a0 = xx_loadl_32(a);
   const __m128i v_a1 = xx_loadl_32(a + a_stride);
   const __m128i v_b0 = xx_loadl_32(b);
@@ -62,8 +61,8 @@ static INLINE void sse4x2_sse4_1(const uint8_t *a, int a_stride,
   const __m128i v_d_w = _mm_sub_epi16(v_a_w, v_b_w);
   *sum = _mm_add_epi32(*sum, _mm_madd_epi16(v_d_w, v_d_w));
 }
-static INLINE void sse8_sse4_1(const uint8_t *a, const uint8_t *b,
-                               __m128i *sum) {
+static INLINE void aom_sse8_sse4_1(const uint8_t *a, const uint8_t *b,
+                                   __m128i *sum) {
   const __m128i v_a0 = xx_loadl_64(a);
   const __m128i v_b0 = xx_loadl_64(b);
   const __m128i v_a_w = _mm_cvtepu8_epi16(v_a0);
@@ -80,7 +79,7 @@ int64_t aom_sse_sse4_1(const uint8_t *a, int a_stride, const uint8_t *b,
   switch (width) {
     case 4:
       do {
-        sse4x2_sse4_1(a, a_stride, b, b_stride, &sum);
+        aom_sse4x2_sse4_1(a, a_stride, b, b_stride, &sum);
         a += a_stride << 1;
         b += b_stride << 1;
         y += 2;
@@ -89,7 +88,7 @@ int64_t aom_sse_sse4_1(const uint8_t *a, int a_stride, const uint8_t *b,
       break;
     case 8:
       do {
-        sse8_sse4_1(a, b, &sum);
+        aom_sse8_sse4_1(a, b, &sum);
         a += a_stride;
         b += b_stride;
         y += 1;
@@ -148,11 +147,11 @@ int64_t aom_sse_sse4_1(const uint8_t *a, int a_stride, const uint8_t *b,
         do {
           int i = 0;
           do {
-            sse8_sse4_1(a + i, b + i, &sum);
-            sse8_sse4_1(a + i + a_stride, b + i + b_stride, &sum);
+            aom_sse8_sse4_1(a + i, b + i, &sum);
+            aom_sse8_sse4_1(a + i + a_stride, b + i + b_stride, &sum);
             i += 8;
           } while (i + 4 < width);
-          sse4x2_sse4_1(a + i, a_stride, b + i, b_stride, &sum);
+          aom_sse4x2_sse4_1(a + i, a_stride, b + i, b_stride, &sum);
           a += (a_stride << 1);
           b += (b_stride << 1);
           y += 2;
@@ -161,7 +160,7 @@ int64_t aom_sse_sse4_1(const uint8_t *a, int a_stride, const uint8_t *b,
         do {
           int i = 0;
           do {
-            sse8_sse4_1(a + i, b + i, &sum);
+            aom_sse8_sse4_1(a + i, b + i, &sum);
             i += 8;
           } while (i < width);
           a += a_stride;
@@ -176,7 +175,6 @@ int64_t aom_sse_sse4_1(const uint8_t *a, int a_stride, const uint8_t *b,
   return sse;
 }
 
-#if CONFIG_AV1_HIGHBITDEPTH
 static INLINE void highbd_sse_w4x2_sse4_1(__m128i *sum, const uint16_t *a,
                                           int a_stride, const uint16_t *b,
                                           int b_stride) {
@@ -350,4 +348,3 @@ int64_t aom_highbd_sse_sse4_1(const uint8_t *a8, int a_stride,
   }
   return sse;
 }
-#endif  // CONFIG_AV1_HIGHBITDEPTH

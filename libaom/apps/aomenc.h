@@ -11,7 +11,6 @@
 #ifndef AOM_APPS_AOMENC_H_
 #define AOM_APPS_AOMENC_H_
 
-#include "aom/aom_codec.h"
 #include "aom/aom_encoder.h"
 
 #ifdef __cplusplus
@@ -38,7 +37,7 @@ struct AvxEncoderConfig {
   const struct AvxInterface *codec;
   int passes;
   int pass;
-  unsigned int usage;
+  int usage;
   ColorInputType color_type;
   int quiet;
   int verbose;
@@ -55,7 +54,6 @@ struct AvxEncoderConfig {
   int disable_warning_prompt;
   int experimental_bitstream;
   aom_chroma_sample_position_t csp;
-  cfg_options_t encoder_config;
 };
 
 #ifdef __cplusplus

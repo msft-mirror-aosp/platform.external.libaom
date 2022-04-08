@@ -12,10 +12,10 @@
 #ifndef AOM_AV1_COMMON_TXB_COMMON_H_
 #define AOM_AV1_COMMON_TXB_COMMON_H_
 
-#include "av1/common/av1_common_int.h"
+#include "av1/common/onyxc_int.h"
 
-extern const int16_t av1_eob_group_start[12];
-extern const int16_t av1_eob_offset_bits[12];
+extern const int16_t k_eob_group_start[12];
+extern const int16_t k_eob_offset_bits[12];
 
 extern const int8_t av1_coeff_band_4x4[16];
 
@@ -386,9 +386,7 @@ static INLINE void get_txb_ctx(const BLOCK_SIZE plane_bsize,
     if (plane_bsize == txsize_to_bsize[tx_size]) {
       txb_ctx->txb_skip_ctx = 0;
     } else {
-      // This is the algorithm to generate table skip_contexts[top][left].
-      //    const int max = AOMMIN(top | left, 4);
-      //    const int min = AOMMIN(AOMMIN(top, left), 4);
+      // This is the algorithm to generate table skip_contexts[min][max].
       //    if (!max)
       //      txb_skip_ctx = 1;
       //    else if (!min)
@@ -400,15 +398,10 @@ static INLINE void get_txb_ctx(const BLOCK_SIZE plane_bsize,
       //    else
       //      txb_skip_ctx = 6;
       static const uint8_t skip_contexts[5][5] = { { 1, 2, 2, 2, 3 },
-                                                   { 2, 4, 4, 4, 5 },
-                                                   { 2, 4, 4, 4, 5 },
-                                                   { 2, 4, 4, 4, 5 },
-                                                   { 3, 5, 5, 5, 6 } };
-      // For top and left, we only care about which of the following three
-      // categories they belong to: { 0 }, { 1, 2, 3 }, or { 4, 5, ... }. The
-      // spec calculates top and left with the Max() function. We can calculate
-      // an approximate max with bitwise OR because the real max and the
-      // approximate max belong to the same category.
+                                                   { 1, 4, 4, 4, 5 },
+                                                   { 1, 4, 4, 4, 5 },
+                                                   { 1, 4, 4, 4, 5 },
+                                                   { 1, 4, 4, 4, 6 } };
       int top = 0;
       int left = 0;
 
@@ -417,16 +410,16 @@ static INLINE void get_txb_ctx(const BLOCK_SIZE plane_bsize,
         top |= a[k];
       } while (++k < txb_w_unit);
       top &= COEFF_CONTEXT_MASK;
-      top = AOMMIN(top, 4);
 
       k = 0;
       do {
         left |= l[k];
       } while (++k < txb_h_unit);
       left &= COEFF_CONTEXT_MASK;
-      left = AOMMIN(left, 4);
+      const int max = AOMMIN(top | left, 4);
+      const int min = AOMMIN(AOMMIN(top, left), 4);
 
-      txb_ctx->txb_skip_ctx = skip_contexts[top][left];
+      txb_ctx->txb_skip_ctx = skip_contexts[min][max];
     }
   } else {
     const int ctx_base = get_entropy_context(tx_size, a, l);

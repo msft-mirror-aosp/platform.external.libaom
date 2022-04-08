@@ -74,6 +74,7 @@ static void convolve_vert(const uint8_t *src, ptrdiff_t src_stride,
 
 static const InterpKernel *get_filter_base(const int16_t *filter) {
   // NOTE: This assumes that the filter table is 256-byte aligned.
+  // TODO(agrange) Modify to make independent of table alignment.
   return (const InterpKernel *)(((intptr_t)filter) & ~((intptr_t)0xFF));
 }
 
@@ -129,7 +130,6 @@ void aom_convolve_copy_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
   }
 }
 
-#if CONFIG_AV1_HIGHBITDEPTH
 static INLINE int highbd_vert_scalar_product(const uint16_t *a,
                                              ptrdiff_t a_stride,
                                              const int16_t *b) {
@@ -236,4 +236,3 @@ void aom_highbd_convolve_copy_c(const uint8_t *src8, ptrdiff_t src_stride,
     dst += dst_stride;
   }
 }
-#endif  // CONFIG_AV1_HIGHBITDEPTH

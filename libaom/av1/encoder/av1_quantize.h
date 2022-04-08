@@ -31,8 +31,6 @@ typedef struct QUANT_PARAM {
   const qm_val_t *qmatrix;
   const qm_val_t *iqmatrix;
   int use_quant_b_adapt;
-  int use_optimize_b;
-  int xform_quant_idx;
 } QUANT_PARAM;
 
 typedef void (*AV1_QUANT_FACADE)(const tran_low_t *coeff_ptr, intptr_t n_coeffs,
@@ -81,15 +79,11 @@ typedef struct {
   DECLARE_ALIGNED(16, int16_t,
                   u_dequant_QTX[QINDEX_RANGE][8]);  // 8: SIMD width
   DECLARE_ALIGNED(16, int16_t,
-                  v_dequant_QTX[QINDEX_RANGE][8]);  // 8: SIMD width
+                  v_dequant_QTX[QINDEX_RANGE][8]);              // 8: SIMD width
+  DECLARE_ALIGNED(16, int16_t, y_dequant_Q3[QINDEX_RANGE][8]);  // 8: SIMD width
+  DECLARE_ALIGNED(16, int16_t, u_dequant_Q3[QINDEX_RANGE][8]);  // 8: SIMD width
+  DECLARE_ALIGNED(16, int16_t, v_dequant_Q3[QINDEX_RANGE][8]);  // 8: SIMD width
 } Dequants;
-
-typedef struct {
-  // Quantization parameters for internal quantizer setup.
-  QUANTS quants;
-  // Dequantization parameters for internal quantizer setup.
-  Dequants dequants;
-} EncQuantDequantParams;
 
 struct AV1_COMP;
 struct AV1Common;
@@ -104,12 +98,9 @@ void av1_build_quantizer(aom_bit_depth_t bit_depth, int y_dc_delta_q,
                          int v_ac_delta_q, QUANTS *const quants,
                          Dequants *const deq);
 
-void av1_init_quantizer(EncQuantDequantParams *const enc_quant_dequant_params,
-                        const CommonQuantParams *quant_params,
-                        aom_bit_depth_t bit_depth);
+void av1_init_quantizer(struct AV1_COMP *cpi);
 
-void av1_set_quantizer(struct AV1Common *const cm, int min_qmlevel,
-                       int max_qmlevel, int q);
+void av1_set_quantizer(struct AV1Common *cm, int q);
 
 int av1_quantizer_to_qindex(int quantizer);
 
@@ -133,7 +124,6 @@ void av1_quantize_dc_facade(const tran_low_t *coeff_ptr, intptr_t n_coeffs,
                             tran_low_t *dqcoeff_ptr, uint16_t *eob_ptr,
                             const SCAN_ORDER *sc, const QUANT_PARAM *qparam);
 
-#if CONFIG_AV1_HIGHBITDEPTH
 void av1_highbd_quantize_fp_facade(const tran_low_t *coeff_ptr,
                                    intptr_t n_coeffs, const MACROBLOCK_PLANE *p,
                                    tran_low_t *qcoeff_ptr,
@@ -154,7 +144,6 @@ void av1_highbd_quantize_dc_facade(const tran_low_t *coeff_ptr,
                                    tran_low_t *dqcoeff_ptr, uint16_t *eob_ptr,
                                    const SCAN_ORDER *sc,
                                    const QUANT_PARAM *qparam);
-#endif
 
 #ifdef __cplusplus
 }  // extern "C"

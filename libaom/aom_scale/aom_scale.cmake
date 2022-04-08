@@ -31,13 +31,10 @@ function(setup_aom_scale_targets)
 
   if(HAVE_DSPR2)
     add_intrinsics_object_library("" "dspr2" "aom_scale"
-                                  "AOM_SCALE_INTRIN_DSPR2")
+                                  "AOM_SCALE_INTRIN_DSPR2" "aom")
   endif()
 
   target_sources(aom PRIVATE $<TARGET_OBJECTS:aom_scale>)
-  if(BUILD_SHARED_LIBS)
-    target_sources(aom_static PRIVATE $<TARGET_OBJECTS:aom_scale>)
-  endif()
 
   # Pass the new lib targets up to the parent scope instance of
   # $AOM_LIB_TARGETS.

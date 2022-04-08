@@ -12,7 +12,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <string>
-#include <tuple>
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
@@ -36,20 +35,8 @@ typedef int64_t (*ErrorBlockFunc)(const tran_low_t *coeff,
                                   const tran_low_t *dqcoeff,
                                   intptr_t block_size, int64_t *ssz, int bps);
 
-typedef int64_t (*ErrorBlockFunc8Bits)(const tran_low_t *coeff,
-                                       const tran_low_t *dqcoeff,
-                                       intptr_t block_size, int64_t *ssz);
-
-typedef std::tuple<ErrorBlockFunc, ErrorBlockFunc, aom_bit_depth_t>
+typedef ::testing::tuple<ErrorBlockFunc, ErrorBlockFunc, aom_bit_depth_t>
     ErrorBlockParam;
-
-template <ErrorBlockFunc8Bits fn>
-int64_t BlockError8BitWrapper(const tran_low_t *coeff,
-                              const tran_low_t *dqcoeff, intptr_t block_size,
-                              int64_t *ssz, int bps) {
-  EXPECT_EQ(bps, 8);
-  return fn(coeff, dqcoeff, block_size, ssz);
-}
 
 class ErrorBlockTest : public ::testing::TestWithParam<ErrorBlockParam> {
  public:
@@ -233,57 +220,29 @@ TEST_P(ErrorBlockTest, DISABLED_Speed) {
   }
 }
 
-using std::make_tuple;
+#if (HAVE_SSE2 || HAVE_AVX)
+using ::testing::make_tuple;
 
-#if (HAVE_SSE2)
-const ErrorBlockParam kErrorBlockTestParamsSse2[] = {
-#if CONFIG_AV1_HIGHBITDEPTH
-  make_tuple(&av1_highbd_block_error_sse2, &av1_highbd_block_error_c,
-             AOM_BITS_10),
-  make_tuple(&av1_highbd_block_error_sse2, &av1_highbd_block_error_c,
-             AOM_BITS_12),
-  make_tuple(&av1_highbd_block_error_sse2, &av1_highbd_block_error_c,
-             AOM_BITS_8),
-#endif
-  make_tuple(&BlockError8BitWrapper<av1_block_error_sse2>,
-             &BlockError8BitWrapper<av1_block_error_c>, AOM_BITS_8)
-};
-
-INSTANTIATE_TEST_SUITE_P(SSE2, ErrorBlockTest,
-                         ::testing::ValuesIn(kErrorBlockTestParamsSse2));
+INSTANTIATE_TEST_CASE_P(
+    SSE2, ErrorBlockTest,
+    ::testing::Values(make_tuple(&av1_highbd_block_error_sse2,
+                                 &av1_highbd_block_error_c, AOM_BITS_10),
+                      make_tuple(&av1_highbd_block_error_sse2,
+                                 &av1_highbd_block_error_c, AOM_BITS_12),
+                      make_tuple(&av1_highbd_block_error_sse2,
+                                 &av1_highbd_block_error_c, AOM_BITS_8)));
 #endif  // HAVE_SSE2
 
 #if (HAVE_AVX2)
-const ErrorBlockParam kErrorBlockTestParamsAvx2[] = {
-#if CONFIG_AV1_HIGHBITDEPTH
-  make_tuple(&av1_highbd_block_error_avx2, &av1_highbd_block_error_c,
-             AOM_BITS_10),
-  make_tuple(&av1_highbd_block_error_avx2, &av1_highbd_block_error_c,
-             AOM_BITS_12),
-  make_tuple(&av1_highbd_block_error_avx2, &av1_highbd_block_error_c,
-             AOM_BITS_8),
-#endif
-  make_tuple(&BlockError8BitWrapper<av1_block_error_avx2>,
-             &BlockError8BitWrapper<av1_block_error_c>, AOM_BITS_8)
-};
+using ::testing::make_tuple;
 
-INSTANTIATE_TEST_SUITE_P(AVX2, ErrorBlockTest,
-                         ::testing::ValuesIn(kErrorBlockTestParamsAvx2));
+INSTANTIATE_TEST_CASE_P(
+    AVX2, ErrorBlockTest,
+    ::testing::Values(make_tuple(&av1_highbd_block_error_avx2,
+                                 &av1_highbd_block_error_c, AOM_BITS_10),
+                      make_tuple(&av1_highbd_block_error_avx2,
+                                 &av1_highbd_block_error_c, AOM_BITS_12),
+                      make_tuple(&av1_highbd_block_error_avx2,
+                                 &av1_highbd_block_error_c, AOM_BITS_8)));
 #endif  // HAVE_AVX2
-
-#if (HAVE_MSA)
-INSTANTIATE_TEST_SUITE_P(
-    MSA, ErrorBlockTest,
-    ::testing::Values(make_tuple(&BlockError8BitWrapper<av1_block_error_msa>,
-                                 &BlockError8BitWrapper<av1_block_error_c>,
-                                 AOM_BITS_8)));
-#endif  // HAVE_MSA
-
-#if (HAVE_NEON)
-INSTANTIATE_TEST_SUITE_P(
-    NEON, ErrorBlockTest,
-    ::testing::Values(make_tuple(&BlockError8BitWrapper<av1_block_error_neon>,
-                                 &BlockError8BitWrapper<av1_block_error_c>,
-                                 AOM_BITS_8)));
-#endif  // HAVE_NEON
 }  // namespace

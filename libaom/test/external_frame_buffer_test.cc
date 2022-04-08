@@ -117,11 +117,13 @@ class ExternalFrameBufferList {
   // Checks that the aom_image_t data is contained within the external frame
   // buffer private data passed back in the aom_image_t.
   void CheckImageFrameBuffer(const aom_image_t *img) {
-    const struct ExternalFrameBuffer *const ext_fb =
-        reinterpret_cast<ExternalFrameBuffer *>(img->fb_priv);
+    if (img->fb_priv != NULL) {
+      const struct ExternalFrameBuffer *const ext_fb =
+          reinterpret_cast<ExternalFrameBuffer *>(img->fb_priv);
 
-    ASSERT_TRUE(img->planes[0] >= ext_fb->data &&
-                img->planes[0] < (ext_fb->data + ext_fb->size));
+      ASSERT_TRUE(img->planes[0] >= ext_fb->data &&
+                  img->planes[0] < (ext_fb->data + ext_fb->size));
+    }
   }
 
   int num_used_buffers() const { return num_used_buffers_; }
@@ -242,7 +244,7 @@ class ExternalFrameBufferMD5Test
     expected_md5[32] = '\0';
 
     ::libaom_test::MD5 md5_res;
-#if FORCE_HIGHBITDEPTH_DECODING
+#if !CONFIG_LOWBITDEPTH
     const aom_img_fmt_t shifted_fmt =
         (aom_img_fmt)(img.fmt & ~AOM_IMG_FMT_HIGHBITDEPTH);
     if (img.bit_depth == 8 && shifted_fmt != img.fmt) {
@@ -256,7 +258,7 @@ class ExternalFrameBufferMD5Test
     } else {
 #endif
       md5_res.Add(&img);
-#if FORCE_HIGHBITDEPTH_DECODING
+#if !CONFIG_LOWBITDEPTH
     }
 #endif
     const char *const actual_md5 = md5_res.Get();
@@ -264,12 +266,6 @@ class ExternalFrameBufferMD5Test
     // Check md5 match.
     ASSERT_STREQ(expected_md5, actual_md5)
         << "Md5 checksums don't match: frame number = " << frame_number;
-
-    const struct ExternalFrameBuffer *const ext_fb =
-        reinterpret_cast<ExternalFrameBuffer *>(img.fb_priv);
-
-    ASSERT_TRUE(img.planes[0] >= ext_fb->data &&
-                img.planes[0] < (ext_fb->data + ext_fb->size));
   }
 
   // Callback to get a free external frame buffer. Return value < 0 is an
@@ -315,7 +311,6 @@ class ExternalFrameBufferTest : public ::testing::Test {
     video_->Begin();
 
     aom_codec_dec_cfg_t cfg = aom_codec_dec_cfg_t();
-    cfg.allow_lowbitdepth = !FORCE_HIGHBITDEPTH_DECODING;
     decoder_ = new libaom_test::AV1Decoder(cfg, 0);
     ASSERT_TRUE(decoder_ != NULL);
   }
@@ -383,7 +378,6 @@ class ExternalFrameBufferNonRefTest : public ExternalFrameBufferTest {
     video_->Begin();
 
     aom_codec_dec_cfg_t cfg = aom_codec_dec_cfg_t();
-    cfg.allow_lowbitdepth = !FORCE_HIGHBITDEPTH_DECODING;
     decoder_ = new libaom_test::AV1Decoder(cfg, 0);
     ASSERT_TRUE(decoder_ != NULL);
   }
@@ -432,7 +426,7 @@ TEST_P(ExternalFrameBufferMD5Test, ExtFBMD5Match) {
   OpenMD5File(md5_filename);
 
   // Set decode config.
-  cfg.allow_lowbitdepth = !FORCE_HIGHBITDEPTH_DECODING;
+  cfg.allow_lowbitdepth = CONFIG_LOWBITDEPTH;
   set_cfg(cfg);
 
   // Decode frame, and check the md5 matching.

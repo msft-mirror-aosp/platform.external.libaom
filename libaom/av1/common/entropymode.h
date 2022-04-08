@@ -63,6 +63,7 @@ struct AV1Common;
 typedef struct {
   const int16_t *scan;
   const int16_t *iscan;
+  const int16_t *neighbors;
 } SCAN_ORDER;
 
 typedef struct frame_contexts {

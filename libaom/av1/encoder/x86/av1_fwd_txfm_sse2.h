@@ -24,10 +24,8 @@
 extern "C" {
 #endif
 
-void av1_fdct8x32_new_sse2(const __m128i *input, __m128i *output,
-                           int8_t cos_bit);
-void av1_fdct8x64_new_sse2(const __m128i *input, __m128i *output,
-                           int8_t cos_bit);
+void fdct8x32_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit);
+void fdct8x64_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit);
 
 static INLINE void fidentity4x4_new_sse2(const __m128i *const input,
                                          __m128i *const output,
@@ -94,7 +92,7 @@ static INLINE void fidentity8x32_new_sse2(const __m128i *input, __m128i *output,
 }
 
 static const transform_1d_sse2 col_txfm8x32_arr[TX_TYPES] = {
-  av1_fdct8x32_new_sse2,   // DCT_DCT
+  fdct8x32_new_sse2,       // DCT_DCT
   NULL,                    // ADST_DCT
   NULL,                    // DCT_ADST
   NULL,                    // ADST_ADST
@@ -104,7 +102,7 @@ static const transform_1d_sse2 col_txfm8x32_arr[TX_TYPES] = {
   NULL,                    // ADST_FLIPADST
   NULL,                    // FLIPADST_ADST
   fidentity8x32_new_sse2,  // IDTX
-  av1_fdct8x32_new_sse2,   // V_DCT
+  fdct8x32_new_sse2,       // V_DCT
   fidentity8x32_new_sse2,  // H_DCT
   NULL,                    // V_ADST
   NULL,                    // H_ADST

@@ -12,7 +12,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <new>
-#include <tuple>
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "test/acm_random.h"
@@ -174,7 +173,7 @@ class HBDMetricsTestBase {
   HBDMetricFunc hbd_metric_;
 };
 
-typedef std::tuple<LBDMetricFunc, HBDMetricFunc, int, int, double>
+typedef ::testing::tuple<LBDMetricFunc, HBDMetricFunc, int, int, double>
     MetricTestTParam;
 class HBDMetricsTest : public HBDMetricsTestBase,
                        public ::testing::TestWithParam<MetricTestTParam> {
@@ -198,7 +197,7 @@ static const double kFSsim_thresh = 0.03;
 // Allow some extra variation due to rounding error accumulated in dct.
 static const double kPhvs_thresh = 0.3;
 
-INSTANTIATE_TEST_SUITE_P(
+INSTANTIATE_TEST_CASE_P(
     AOMSSIM, HBDMetricsTest,
     ::testing::Values(MetricTestTParam(&compute_aomssim, &compute_hbd_aomssim,
                                        8, 10, kSsim_thresh),
@@ -208,7 +207,7 @@ INSTANTIATE_TEST_SUITE_P(
                                        8, 12, kSsim_thresh),
                       MetricTestTParam(&compute_aomssim, &compute_hbd_aomssim,
                                        12, 12, kPhvs_thresh)));
-INSTANTIATE_TEST_SUITE_P(
+INSTANTIATE_TEST_CASE_P(
     FASTSSIM, HBDMetricsTest,
     ::testing::Values(MetricTestTParam(&compute_fastssim, &compute_hbd_fastssim,
                                        8, 10, kFSsim_thresh),
@@ -218,7 +217,7 @@ INSTANTIATE_TEST_SUITE_P(
                                        8, 12, kFSsim_thresh),
                       MetricTestTParam(&compute_fastssim, &compute_hbd_fastssim,
                                        12, 12, kFSsim_thresh)));
-INSTANTIATE_TEST_SUITE_P(
+INSTANTIATE_TEST_CASE_P(
     PSNRHVS, HBDMetricsTest,
     ::testing::Values(MetricTestTParam(&compute_psnrhvs, &compute_hbd_psnrhvs,
                                        8, 10, kPhvs_thresh),
@@ -228,7 +227,7 @@ INSTANTIATE_TEST_SUITE_P(
                                        8, 12, kPhvs_thresh),
                       MetricTestTParam(&compute_psnrhvs, &compute_hbd_psnrhvs,
                                        12, 12, kPhvs_thresh)));
-INSTANTIATE_TEST_SUITE_P(
+INSTANTIATE_TEST_CASE_P(
     PSNR, HBDMetricsTest,
     ::testing::Values(
         MetricTestTParam(&compute_psnr, &compute_hbd_psnr, 8, 10, kPhvs_thresh),

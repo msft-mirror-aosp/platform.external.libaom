@@ -23,6 +23,6 @@ set(CMAKE_SYSTEM_PROCESSOR "i386")
 set(CMAKE_OSX_ARCHITECTURES "i386")
 
 # Avoid noisy PIC/PIE warnings.
-set(CONFIG_PIC 1 CACHE STRING "")
+set(CONFIG_PIC 1 CACHE NUMBER "")
 
 include("${CMAKE_CURRENT_LIST_DIR}/ios-simulator-common.cmake")

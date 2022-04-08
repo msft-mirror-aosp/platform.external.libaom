@@ -206,7 +206,7 @@ static INLINE void sync_write(AV1LfSync *const lf_sync, int r, int c,
 
 static void enqueue_lf_jobs(AV1LfSync *lf_sync, AV1_COMMON *cm, int start,
                             int stop,
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
                             int is_decoding,
 #endif
                             int plane_start, int plane_end) {
@@ -223,7 +223,7 @@ static void enqueue_lf_jobs(AV1LfSync *lf_sync, AV1_COMMON *cm, int start,
         continue;
       else if (plane == 2 && !(cm->lf.filter_level_v))
         continue;
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
       int step = MAX_MIB_SIZE;
       if (is_decoding) {
         step = MI_SIZE_64X64;
@@ -268,8 +268,7 @@ static INLINE void thread_loop_filter_rows(
     struct macroblockd_plane *planes, MACROBLOCKD *xd,
     AV1LfSync *const lf_sync) {
   const int sb_cols =
-      ALIGN_POWER_OF_TWO(cm->mi_params.mi_cols, MAX_MIB_SIZE_LOG2) >>
-      MAX_MIB_SIZE_LOG2;
+      ALIGN_POWER_OF_TWO(cm->mi_cols, MAX_MIB_SIZE_LOG2) >> MAX_MIB_SIZE_LOG2;
   int mi_row, mi_col, plane, dir;
   int r, c;
 
@@ -283,8 +282,7 @@ static INLINE void thread_loop_filter_rows(
       r = mi_row >> MAX_MIB_SIZE_LOG2;
 
       if (dir == 0) {
-        for (mi_col = 0; mi_col < cm->mi_params.mi_cols;
-             mi_col += MAX_MIB_SIZE) {
+        for (mi_col = 0; mi_col < cm->mi_cols; mi_col += MAX_MIB_SIZE) {
           c = mi_col >> MAX_MIB_SIZE_LOG2;
 
           av1_setup_dst_planes(planes, cm->seq_params.sb_size, frame_buffer,
@@ -295,8 +293,7 @@ static INLINE void thread_loop_filter_rows(
           sync_write(lf_sync, r, c, sb_cols, plane);
         }
       } else if (dir == 1) {
-        for (mi_col = 0; mi_col < cm->mi_params.mi_cols;
-             mi_col += MAX_MIB_SIZE) {
+        for (mi_col = 0; mi_col < cm->mi_cols; mi_col += MAX_MIB_SIZE) {
           c = mi_col >> MAX_MIB_SIZE_LOG2;
 
           // Wait for vertical edge filtering of the top-right block to be
@@ -328,14 +325,13 @@ static int loop_filter_row_worker(void *arg1, void *arg2) {
   return 1;
 }
 
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
 static INLINE void thread_loop_filter_bitmask_rows(
     const YV12_BUFFER_CONFIG *const frame_buffer, AV1_COMMON *const cm,
     struct macroblockd_plane *planes, MACROBLOCKD *xd,
     AV1LfSync *const lf_sync) {
   const int sb_cols =
-      ALIGN_POWER_OF_TWO(cm->mi_params.mi_cols, MIN_MIB_SIZE_LOG2) >>
-      MIN_MIB_SIZE_LOG2;
+      ALIGN_POWER_OF_TWO(cm->mi_cols, MIN_MIB_SIZE_LOG2) >> MIN_MIB_SIZE_LOG2;
   int mi_row, mi_col, plane, dir;
   int r, c;
   (void)xd;
@@ -350,8 +346,7 @@ static INLINE void thread_loop_filter_bitmask_rows(
       r = mi_row >> MIN_MIB_SIZE_LOG2;
 
       if (dir == 0) {
-        for (mi_col = 0; mi_col < cm->mi_params.mi_cols;
-             mi_col += MI_SIZE_64X64) {
+        for (mi_col = 0; mi_col < cm->mi_cols; mi_col += MI_SIZE_64X64) {
           c = mi_col >> MIN_MIB_SIZE_LOG2;
 
           av1_setup_dst_planes(planes, BLOCK_64X64, frame_buffer, mi_row,
@@ -362,8 +357,7 @@ static INLINE void thread_loop_filter_bitmask_rows(
           sync_write(lf_sync, r, c, sb_cols, plane);
         }
       } else if (dir == 1) {
-        for (mi_col = 0; mi_col < cm->mi_params.mi_cols;
-             mi_col += MI_SIZE_64X64) {
+        for (mi_col = 0; mi_col < cm->mi_cols; mi_col += MI_SIZE_64X64) {
           c = mi_col >> MIN_MIB_SIZE_LOG2;
 
           // Wait for vertical edge filtering of the top-right block to be
@@ -394,31 +388,30 @@ static int loop_filter_bitmask_row_worker(void *arg1, void *arg2) {
                                   lf_data->planes, lf_data->xd, lf_sync);
   return 1;
 }
-#endif  // CONFIG_LPF_MASK
+#endif  // LOOP_FILTER_BITMASK
 
 static void loop_filter_rows_mt(YV12_BUFFER_CONFIG *frame, AV1_COMMON *cm,
                                 MACROBLOCKD *xd, int start, int stop,
                                 int plane_start, int plane_end,
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
                                 int is_decoding,
 #endif
                                 AVxWorker *workers, int nworkers,
                                 AV1LfSync *lf_sync) {
   const AVxWorkerInterface *const winterface = aom_get_worker_interface();
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
   int sb_rows;
   if (is_decoding) {
-    sb_rows = ALIGN_POWER_OF_TWO(cm->mi_params.mi_rows, MIN_MIB_SIZE_LOG2) >>
-              MIN_MIB_SIZE_LOG2;
+    sb_rows =
+        ALIGN_POWER_OF_TWO(cm->mi_rows, MIN_MIB_SIZE_LOG2) >> MIN_MIB_SIZE_LOG2;
   } else {
-    sb_rows = ALIGN_POWER_OF_TWO(cm->mi_params.mi_rows, MAX_MIB_SIZE_LOG2) >>
-              MAX_MIB_SIZE_LOG2;
+    sb_rows =
+        ALIGN_POWER_OF_TWO(cm->mi_rows, MAX_MIB_SIZE_LOG2) >> MAX_MIB_SIZE_LOG2;
   }
 #else
   // Number of superblock rows and cols
   const int sb_rows =
-      ALIGN_POWER_OF_TWO(cm->mi_params.mi_rows, MAX_MIB_SIZE_LOG2) >>
-      MAX_MIB_SIZE_LOG2;
+      ALIGN_POWER_OF_TWO(cm->mi_rows, MAX_MIB_SIZE_LOG2) >> MAX_MIB_SIZE_LOG2;
 #endif
   const int num_workers = nworkers;
   int i;
@@ -436,7 +429,7 @@ static void loop_filter_rows_mt(YV12_BUFFER_CONFIG *frame, AV1_COMMON *cm,
   }
 
   enqueue_lf_jobs(lf_sync, cm, start, stop,
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
                   is_decoding,
 #endif
                   plane_start, plane_end);
@@ -446,7 +439,7 @@ static void loop_filter_rows_mt(YV12_BUFFER_CONFIG *frame, AV1_COMMON *cm,
     AVxWorker *const worker = &workers[i];
     LFWorkerData *const lf_data = &lf_sync->lfdata[i];
 
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
     if (is_decoding) {
       worker->hook = loop_filter_bitmask_row_worker;
     } else {
@@ -478,7 +471,7 @@ static void loop_filter_rows_mt(YV12_BUFFER_CONFIG *frame, AV1_COMMON *cm,
 void av1_loop_filter_frame_mt(YV12_BUFFER_CONFIG *frame, AV1_COMMON *cm,
                               MACROBLOCKD *xd, int plane_start, int plane_end,
                               int partial_frame,
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
                               int is_decoding,
 #endif
                               AVxWorker *workers, int num_workers,
@@ -486,16 +479,16 @@ void av1_loop_filter_frame_mt(YV12_BUFFER_CONFIG *frame, AV1_COMMON *cm,
   int start_mi_row, end_mi_row, mi_rows_to_filter;
 
   start_mi_row = 0;
-  mi_rows_to_filter = cm->mi_params.mi_rows;
-  if (partial_frame && cm->mi_params.mi_rows > 8) {
-    start_mi_row = cm->mi_params.mi_rows >> 1;
+  mi_rows_to_filter = cm->mi_rows;
+  if (partial_frame && cm->mi_rows > 8) {
+    start_mi_row = cm->mi_rows >> 1;
     start_mi_row &= 0xfffffff8;
-    mi_rows_to_filter = AOMMAX(cm->mi_params.mi_rows / 8, 8);
+    mi_rows_to_filter = AOMMAX(cm->mi_rows / 8, 8);
   }
   end_mi_row = start_mi_row + mi_rows_to_filter;
   av1_loop_filter_frame_init(cm, plane_start, plane_end);
 
-#if CONFIG_LPF_MASK
+#if LOOP_FILTER_BITMASK
   if (is_decoding) {
     cm->is_decoding = is_decoding;
     // TODO(chengchen): currently use one thread to build bitmasks for the
@@ -916,7 +909,7 @@ void av1_loop_restoration_filter_frame_mt(YV12_BUFFER_CONFIG *frame,
                                           AV1_COMMON *cm, int optimized_lr,
                                           AVxWorker *workers, int num_workers,
                                           AV1LrSync *lr_sync, void *lr_ctxt) {
-  assert(!cm->features.all_lossless);
+  assert(!cm->all_lossless);
 
   const int num_planes = av1_num_planes(cm);
 

@@ -180,7 +180,6 @@ static void print_variance_y(FILE *debug_file, aom_image_t *raw,
   aom_image_t renoised;
   grain->apply_grain = 1;
   grain->random_seed = 7391;
-  grain->bit_depth = raw->bit_depth;
   aom_img_alloc(&renoised, raw->fmt, raw->w, raw->h, 1);
 
   if (av1_add_film_grain(grain, denoised, &renoised)) {
@@ -314,7 +313,7 @@ int main(int argc, char *argv[]) {
                      info.frame_height, 1)) {
     die("Failed to allocate image.");
   }
-  infile = fopen(args.input, "rb");
+  infile = fopen(args.input, "r");
   if (!infile) {
     die("Failed to open input file:", args.input);
   }

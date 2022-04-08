@@ -123,29 +123,32 @@ class AV1EncodePerfTest
 };
 
 TEST_P(AV1EncodePerfTest, PerfTest) {
-  for (const EncodePerfTestVideo &test_video : kAV1EncodePerfTestVectors) {
-    for (int speed : kEncodePerfTestSpeeds) {
-      for (int threads : kEncodePerfTestThreads) {
-        if (test_video.width < 512 && threads > 1)
+  for (size_t i = 0; i < NELEMENTS(kAV1EncodePerfTestVectors); ++i) {
+    for (size_t j = 0; j < NELEMENTS(kEncodePerfTestSpeeds); ++j) {
+      for (size_t k = 0; k < NELEMENTS(kEncodePerfTestThreads); ++k) {
+        if (kAV1EncodePerfTestVectors[i].width < 512 &&
+            kEncodePerfTestThreads[k] > 1)
           continue;
-        else if (test_video.width < 1024 && threads > 2)
+        else if (kAV1EncodePerfTestVectors[i].width < 1024 &&
+                 kEncodePerfTestThreads[k] > 2)
           continue;
 
-        set_threads(threads);
+        set_threads(kEncodePerfTestThreads[k]);
         SetUp();
 
         const aom_rational timebase = { 33333333, 1000000000 };
         cfg_.g_timebase = timebase;
-        cfg_.rc_target_bitrate = test_video.bitrate;
+        cfg_.rc_target_bitrate = kAV1EncodePerfTestVectors[i].bitrate;
 
         init_flags_ = AOM_CODEC_USE_PSNR;
 
-        const unsigned frames = test_video.frames;
-        const char *video_name = test_video.name;
-        libaom_test::I420VideoSource video(video_name, test_video.width,
-                                           test_video.height, timebase.den,
-                                           timebase.num, 0, test_video.frames);
-        set_speed(speed);
+        const unsigned frames = kAV1EncodePerfTestVectors[i].frames;
+        const char *video_name = kAV1EncodePerfTestVectors[i].name;
+        libaom_test::I420VideoSource video(
+            video_name, kAV1EncodePerfTestVectors[i].width,
+            kAV1EncodePerfTestVectors[i].height, timebase.den, timebase.num, 0,
+            kAV1EncodePerfTestVectors[i].frames);
+        set_speed(kEncodePerfTestSpeeds[j]);
 
         aom_usec_timer t;
         aom_usec_timer_start(&t);
@@ -157,9 +160,10 @@ TEST_P(AV1EncodePerfTest, PerfTest) {
         const double fps = frames / elapsed_secs;
         const double minimum_psnr = min_psnr();
         std::string display_name(video_name);
-        if (threads > 1) {
+        if (kEncodePerfTestThreads[k] > 1) {
           char thread_count[32];
-          snprintf(thread_count, sizeof(thread_count), "_t-%d", threads);
+          snprintf(thread_count, sizeof(thread_count), "_t-%d",
+                   kEncodePerfTestThreads[k]);
           display_name += thread_count;
         }
 
@@ -171,8 +175,8 @@ TEST_P(AV1EncodePerfTest, PerfTest) {
         printf("\t\"totalFrames\" : %u,\n", frames);
         printf("\t\"framesPerSecond\" : %f,\n", fps);
         printf("\t\"minPsnr\" : %f,\n", minimum_psnr);
-        printf("\t\"speed\" : %d,\n", speed);
-        printf("\t\"threads\" : %d\n", threads);
+        printf("\t\"speed\" : %d,\n", kEncodePerfTestSpeeds[j]);
+        printf("\t\"threads\" : %d\n", kEncodePerfTestThreads[k]);
         printf("}\n");
       }
     }

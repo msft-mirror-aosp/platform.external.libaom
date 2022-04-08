@@ -21,6 +21,6 @@ set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_COMPILER_ARG1 "-arch ${CMAKE_SYSTEM_PROCESSOR}")
 
 # No runtime cpu detect for arm*-ios targets.
-set(CONFIG_RUNTIME_CPU_DETECT 0 CACHE STRING "")
+set(CONFIG_RUNTIME_CPU_DETECT 0 CACHE NUMBER "")
 
 # TODO(tomfinegan): Handle bit code embedding.

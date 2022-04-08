@@ -143,7 +143,7 @@ SIMD_INLINE void c_v64_store_aligned(void *p, c_v64 a) {
   c_v64_store_unaligned(p, a);
 }
 
-SIMD_INLINE c_v64 c_v64_zero(void) {
+SIMD_INLINE c_v64 c_v64_zero() {
   c_v64 t;
   t.u64 = 0;
   return t;
@@ -171,14 +171,14 @@ SIMD_INLINE c_v64 c_v64_dup_32(uint32_t x) {
 SIMD_INLINE c_v64 c_v64_add_8(c_v64 a, c_v64 b) {
   c_v64 t;
   int c;
-  for (c = 0; c < 8; c++) t.u8[c] = (uint8_t)(a.u8[c] + b.u8[c]);
+  for (c = 0; c < 8; c++) t.u8[c] = a.u8[c] + b.u8[c];
   return t;
 }
 
 SIMD_INLINE c_v64 c_v64_add_16(c_v64 a, c_v64 b) {
   c_v64 t;
   int c;
-  for (c = 0; c < 4; c++) t.u16[c] = (uint16_t)(a.u16[c] + b.u16[c]);
+  for (c = 0; c < 4; c++) t.u16[c] = a.u16[c] + b.u16[c];
   return t;
 }
 
@@ -228,7 +228,7 @@ SIMD_INLINE c_v64 c_v64_add_32(c_v64 a, c_v64 b) {
 SIMD_INLINE c_v64 c_v64_sub_8(c_v64 a, c_v64 b) {
   c_v64 t;
   int c;
-  for (c = 0; c < 8; c++) t.u8[c] = (uint8_t)(a.u8[c] - b.u8[c]);
+  for (c = 0; c < 8; c++) t.u8[c] = a.u8[c] - b.u8[c];
   return t;
 }
 
@@ -252,7 +252,7 @@ SIMD_INLINE c_v64 c_v64_ssub_s8(c_v64 a, c_v64 b) {
 SIMD_INLINE c_v64 c_v64_sub_16(c_v64 a, c_v64 b) {
   c_v64 t;
   int c;
-  for (c = 0; c < 4; c++) t.u16[c] = (uint16_t)(a.u16[c] - b.u16[c]);
+  for (c = 0; c < 4; c++) t.u16[c] = a.u16[c] - b.u16[c];
   return t;
 }
 
@@ -288,15 +288,14 @@ SIMD_INLINE c_v64 c_v64_abs_s16(c_v64 a) {
   c_v64 t;
   int c;
   for (c = 0; c < 4; c++)
-    t.u16[c] = (uint16_t)((int16_t)a.u16[c] > 0 ? a.u16[c] : -a.u16[c]);
+    t.u16[c] = (int16_t)a.u16[c] > 0 ? a.u16[c] : -a.u16[c];
   return t;
 }
 
 SIMD_INLINE c_v64 c_v64_abs_s8(c_v64 a) {
   c_v64 t;
   int c;
-  for (c = 0; c < 8; c++)
-    t.u8[c] = (uint8_t)((int8_t)a.u8[c] > 0 ? a.u8[c] : -a.u8[c]);
+  for (c = 0; c < 8; c++) t.u8[c] = (int8_t)a.u8[c] > 0 ? a.u8[c] : -a.u8[c];
   return t;
 }
 
@@ -527,14 +526,14 @@ SIMD_INLINE c_v64 c_v64_pack_s16_s8(c_v64 a, c_v64 b) {
     a = b;
     b = u;
   }
-  t.u8[7] = (uint8_t)(a.s16[3] > 127 ? 127 : a.s16[3] < -128 ? 128 : a.s16[3]);
-  t.u8[6] = (uint8_t)(a.s16[2] > 127 ? 127 : a.s16[2] < -128 ? 128 : a.s16[2]);
-  t.u8[5] = (uint8_t)(a.s16[1] > 127 ? 127 : a.s16[1] < -128 ? 128 : a.s16[1]);
-  t.u8[4] = (uint8_t)(a.s16[0] > 127 ? 127 : a.s16[0] < -128 ? 128 : a.s16[0]);
-  t.u8[3] = (uint8_t)(b.s16[3] > 127 ? 127 : b.s16[3] < -128 ? 128 : b.s16[3]);
-  t.u8[2] = (uint8_t)(b.s16[2] > 127 ? 127 : b.s16[2] < -128 ? 128 : b.s16[2]);
-  t.u8[1] = (uint8_t)(b.s16[1] > 127 ? 127 : b.s16[1] < -128 ? 128 : b.s16[1]);
-  t.u8[0] = (uint8_t)(b.s16[0] > 127 ? 127 : b.s16[0] < -128 ? 128 : b.s16[0]);
+  t.u8[7] = a.s16[3] > 127 ? 127 : a.s16[3] < -128 ? 128 : a.s16[3];
+  t.u8[6] = a.s16[2] > 127 ? 127 : a.s16[2] < -128 ? 128 : a.s16[2];
+  t.u8[5] = a.s16[1] > 127 ? 127 : a.s16[1] < -128 ? 128 : a.s16[1];
+  t.u8[4] = a.s16[0] > 127 ? 127 : a.s16[0] < -128 ? 128 : a.s16[0];
+  t.u8[3] = b.s16[3] > 127 ? 127 : b.s16[3] < -128 ? 128 : b.s16[3];
+  t.u8[2] = b.s16[2] > 127 ? 127 : b.s16[2] < -128 ? 128 : b.s16[2];
+  t.u8[1] = b.s16[1] > 127 ? 127 : b.s16[1] < -128 ? 128 : b.s16[1];
+  t.u8[0] = b.s16[0] > 127 ? 127 : b.s16[0] < -128 ? 128 : b.s16[0];
   return t;
 }
 
@@ -601,41 +600,28 @@ SIMD_INLINE int64_t c_v64_hadd_s16(c_v64 a) {
   return a.s16[3] + a.s16[2] + a.s16[1] + a.s16[0];
 }
 
-typedef struct {
-  uint32_t val;
-  int count;
-} c_sad64_internal;
-
-SIMD_INLINE c_sad64_internal c_v64_sad_u8_init(void) {
-  c_sad64_internal t;
-  t.val = t.count = 0;
-  return t;
-}
+typedef uint32_t c_sad64_internal;
 
 /* Implementation dependent return value.  Result must be finalised with
-   v64_sad_u8_sum(). The result for more than 32 v64_sad_u8() calls is
-   undefined. */
+   v64_sad_u8_sum().
+   The result for more than 32 v64_sad_u8() calls is undefined. */
+SIMD_INLINE c_sad64_internal c_v64_sad_u8_init() { return 0; }
+
 SIMD_INLINE c_sad64_internal c_v64_sad_u8(c_sad64_internal s, c_v64 a,
                                           c_v64 b) {
   int c;
   for (c = 0; c < 8; c++)
-    s.val += a.u8[c] > b.u8[c] ? a.u8[c] - b.u8[c] : b.u8[c] - a.u8[c];
-  s.count++;
-  if (SIMD_CHECK && s.count > 32) {
-    fprintf(stderr,
-            "Error: sad called 32 times returning an undefined result\n");
-    abort();
-  }
+    s += a.u8[c] > b.u8[c] ? a.u8[c] - b.u8[c] : b.u8[c] - a.u8[c];
   return s;
 }
 
-SIMD_INLINE uint32_t c_v64_sad_u8_sum(c_sad64_internal s) { return s.val; }
+SIMD_INLINE uint32_t c_v64_sad_u8_sum(c_sad64_internal s) { return s; }
 
 typedef uint32_t c_ssd64_internal;
 
 /* Implementation dependent return value.  Result must be finalised with
  * v64_ssd_u8_sum(). */
-SIMD_INLINE c_ssd64_internal c_v64_ssd_u8_init(void) { return 0; }
+SIMD_INLINE c_ssd64_internal c_v64_ssd_u8_init() { return 0; }
 
 SIMD_INLINE c_ssd64_internal c_v64_ssd_u8(c_ssd64_internal s, c_v64 a,
                                           c_v64 b) {
@@ -831,7 +817,7 @@ SIMD_INLINE c_v64 c_v64_shl_8(c_v64 a, unsigned int n) {
     fprintf(stderr, "Error: Undefined u8 shift left %d\n", n);
     abort();
   }
-  for (c = 0; c < 8; c++) t.s8[c] = (int8_t)(a.u8[c] << n);
+  for (c = 0; c < 8; c++) t.s8[c] = a.u8[c] << n;
   return t;
 }
 
@@ -864,7 +850,7 @@ SIMD_INLINE c_v64 c_v64_shl_16(c_v64 a, unsigned int n) {
     fprintf(stderr, "Error: Undefined u16 shift left %d\n", n);
     abort();
   }
-  for (c = 0; c < 4; c++) t.u16[c] = (uint16_t)(a.u16[c] << n);
+  for (c = 0; c < 4; c++) t.u16[c] = a.u16[c] << n;
   return t;
 }
 
