@@ -16,6 +16,7 @@
 #include "config/aom_dsp_rtcd.h"
 
 #include "test/acm_random.h"
+#include "test/clear_system_state.h"
 #include "test/register_state_check.h"
 #include "test/util.h"
 
@@ -163,7 +164,7 @@ class HadamardTestBase : public ::testing::TestWithParam<HadamardFuncWithSize> {
     for (int i = 0; i < block_size_; ++i) a[i] = Rand();
 
     ReferenceHadamard(a, bwh_, b_ref, bwh_);
-    API_REGISTER_STATE_CHECK(h_func_(a, bwh_, b));
+    ASM_REGISTER_STATE_CHECK(h_func_(a, bwh_, b));
 
     // The order of the output is not important. Sort before checking.
     std::sort(b, b + block_size_);
@@ -184,7 +185,7 @@ class HadamardTestBase : public ::testing::TestWithParam<HadamardFuncWithSize> {
       memset(b_ref, 0, sizeof(b_ref));
 
       ReferenceHadamard(a, i, b_ref, bwh_);
-      API_REGISTER_STATE_CHECK(h_func_(a, i, b));
+      ASM_REGISTER_STATE_CHECK(h_func_(a, i, b));
 
       // The order of the output is not important. Sort before checking.
       std::sort(b, b + block_size_);

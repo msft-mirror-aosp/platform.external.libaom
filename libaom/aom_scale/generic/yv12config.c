@@ -50,8 +50,7 @@ static int realloc_frame_buffer_aligned(
     void *cb_priv, const int y_stride, const uint64_t yplane_size,
     const uint64_t uvplane_size, const int aligned_width,
     const int aligned_height, const int uv_width, const int uv_height,
-    const int uv_stride, const int uv_border_w, const int uv_border_h,
-    int alloc_y_buffer_8bit) {
+    const int uv_stride, const int uv_border_w, const int uv_border_h) {
   if (ybf) {
     const int aom_byte_align = (byte_alignment == 0) ? 1 : byte_alignment;
     const uint64_t frame_size =
@@ -154,7 +153,7 @@ static int realloc_frame_buffer_aligned(
 
     ybf->use_external_reference_buffers = 0;
 
-    if (use_highbitdepth && alloc_y_buffer_8bit) {
+    if (use_highbitdepth) {
       if (ybf->y_buffer_8bit) aom_free(ybf->y_buffer_8bit);
       ybf->y_buffer_8bit = (uint8_t *)aom_memalign(32, (size_t)yplane_size);
       if (!ybf->y_buffer_8bit) return AOM_CODEC_MEM_ERROR;
@@ -199,8 +198,7 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
                              int ss_x, int ss_y, int use_highbitdepth,
                              int border, int byte_alignment,
                              aom_codec_frame_buffer_t *fb,
-                             aom_get_frame_buffer_cb_fn_t cb, void *cb_priv,
-                             int alloc_y_buffer_8bit) {
+                             aom_get_frame_buffer_cb_fn_t cb, void *cb_priv) {
 #if CONFIG_SIZE_LIMIT
   if (width > DECODE_WIDTH_LIMIT || height > DECODE_HEIGHT_LIMIT)
     return AOM_CODEC_MEM_ERROR;
@@ -226,7 +224,7 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
         ybf, width, height, ss_x, ss_y, use_highbitdepth, border,
         byte_alignment, fb, cb, cb_priv, y_stride, yplane_size, uvplane_size,
         aligned_width, aligned_height, uv_width, uv_height, uv_stride,
-        uv_border_w, uv_border_h, alloc_y_buffer_8bit);
+        uv_border_w, uv_border_h);
   }
   return AOM_CODEC_MEM_ERROR;
 }
@@ -238,7 +236,7 @@ int aom_alloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
     aom_free_frame_buffer(ybf);
     return aom_realloc_frame_buffer(ybf, width, height, ss_x, ss_y,
                                     use_highbitdepth, border, byte_alignment,
-                                    NULL, NULL, NULL, 0);
+                                    NULL, NULL, NULL);
   }
   return AOM_CODEC_MEM_ERROR;
 }
@@ -253,7 +251,6 @@ void aom_remove_metadata_from_frame_buffer(YV12_BUFFER_CONFIG *ybf) {
 int aom_copy_metadata_to_frame_buffer(YV12_BUFFER_CONFIG *ybf,
                                       const aom_metadata_array_t *arr) {
   if (!ybf || !arr || !arr->metadata_array) return -1;
-  if (ybf->metadata == arr) return 0;
   aom_remove_metadata_from_frame_buffer(ybf);
   ybf->metadata = aom_img_metadata_array_alloc(arr->sz);
   if (!ybf->metadata) return -1;
