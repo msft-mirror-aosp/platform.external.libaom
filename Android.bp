@@ -2,16 +2,16 @@
 // Generated from Android.bp.in, run ./generate_config.sh to regenerate
 
 aom_av1_common_intrin_avx2 = [
-    "libaom/av1/common/cdef_block_avx2.c",
     "libaom/av1/common/x86/av1_inv_txfm_avx2.c",
+    "libaom/av1/common/x86/cdef_block_avx2.c",
     "libaom/av1/common/x86/cfl_avx2.c",
     "libaom/av1/common/x86/convolve_2d_avx2.c",
     "libaom/av1/common/x86/convolve_avx2.c",
     "libaom/av1/common/x86/highbd_convolve_2d_avx2.c",
     "libaom/av1/common/x86/highbd_inv_txfm_avx2.c",
     "libaom/av1/common/x86/highbd_jnt_convolve_avx2.c",
-    "libaom/av1/common/x86/highbd_wiener_convolve_avx2.c",
     "libaom/av1/common/x86/highbd_warp_affine_avx2.c",
+    "libaom/av1/common/x86/highbd_wiener_convolve_avx2.c",
     "libaom/av1/common/x86/jnt_convolve_avx2.c",
     "libaom/av1/common/x86/reconinter_avx2.c",
     "libaom/av1/common/x86/selfguided_avx2.c",
@@ -20,38 +20,38 @@ aom_av1_common_intrin_avx2 = [
 ]
 
 aom_av1_common_intrin_neon = [
+    "libaom/av1/common/arm/av1_inv_txfm_neon.c",
     "libaom/av1/common/arm/av1_txfm_neon.c",
-    "libaom/av1/common/arm/cfl_neon.c",
-    "libaom/av1/common/arm/convolve_neon.c",
-    "libaom/av1/common/arm/jnt_convolve_neon.c",
     "libaom/av1/common/arm/blend_a64_hmask_neon.c",
     "libaom/av1/common/arm/blend_a64_vmask_neon.c",
+    "libaom/av1/common/arm/cdef_block_neon.c",
+    "libaom/av1/common/arm/cfl_neon.c",
+    "libaom/av1/common/arm/convolve_neon.c",
+    "libaom/av1/common/arm/highbd_inv_txfm_neon.c",
+    "libaom/av1/common/arm/jnt_convolve_neon.c",
     "libaom/av1/common/arm/reconinter_neon.c",
     "libaom/av1/common/arm/reconintra_neon.c",
     "libaom/av1/common/arm/resize_neon.c",
-    "libaom/av1/common/arm/wiener_convolve_neon.c",
     "libaom/av1/common/arm/selfguided_neon.c",
-    "libaom/av1/common/arm/av1_inv_txfm_neon.c",
-    "libaom/av1/common/arm/highbd_inv_txfm_neon.c",
     "libaom/av1/common/arm/warp_plane_neon.c",
-    "libaom/av1/common/cdef_block_neon.c",
+    "libaom/av1/common/arm/wiener_convolve_neon.c",
 ]
 
 aom_av1_common_intrin_sse2 = [
-    "libaom/av1/common/cdef_block_sse2.c",
+    "libaom/av1/common/x86/cdef_block_sse2.c",
     "libaom/av1/common/x86/cfl_sse2.c",
     "libaom/av1/common/x86/convolve_2d_sse2.c",
     "libaom/av1/common/x86/convolve_sse2.c",
     "libaom/av1/common/x86/jnt_convolve_sse2.c",
-    "libaom/av1/common/x86/wiener_convolve_sse2.c",
     "libaom/av1/common/x86/warp_plane_sse2.c",
+    "libaom/av1/common/x86/wiener_convolve_sse2.c",
 ]
 
 aom_av1_common_intrin_sse4_1 = [
-    "libaom/av1/common/cdef_block_sse4.c",
     "libaom/av1/common/x86/av1_convolve_horiz_rs_sse4.c",
     "libaom/av1/common/x86/av1_convolve_scale_sse4.c",
     "libaom/av1/common/x86/av1_txfm_sse4.c",
+    "libaom/av1/common/x86/cdef_block_sse4.c",
     "libaom/av1/common/x86/filterintra_sse4.c",
     "libaom/av1/common/x86/highbd_convolve_2d_sse4.c",
     "libaom/av1/common/x86/highbd_inv_txfm_sse4.c",
@@ -64,8 +64,8 @@ aom_av1_common_intrin_sse4_1 = [
 ]
 
 aom_av1_common_intrin_ssse3 = [
-    "libaom/av1/common/cdef_block_ssse3.c",
     "libaom/av1/common/x86/av1_inv_txfm_ssse3.c",
+    "libaom/av1/common/x86/cdef_block_ssse3.c",
     "libaom/av1/common/x86/cfl_ssse3.c",
     "libaom/av1/common/x86/highbd_convolve_2d_ssse3.c",
     "libaom/av1/common/x86/highbd_wiener_convolve_ssse3.c",
@@ -79,7 +79,6 @@ aom_av1_common_intrin_vsx = [
 ]
 
 aom_av1_common_sources = [
-    "libaom/common/args_helper.c",
     "libaom/av1/arg_defs.c",
     "libaom/av1/common/alloccommon.c",
     "libaom/av1/common/av1_inv_txfm1d.c",
@@ -113,6 +112,7 @@ aom_av1_common_sources = [
     "libaom/av1/common/timing.c",
     "libaom/av1/common/txb_common.c",
     "libaom/av1/common/warped_motion.c",
+    "libaom/common/args_helper.c",
 ]
 
 aom_av1_decoder_sources = [
@@ -122,6 +122,7 @@ aom_av1_decoder_sources = [
     "libaom/av1/decoder/decoder.c",
     "libaom/av1/decoder/decodetxb.c",
     "libaom/av1/decoder/detokenize.c",
+    "libaom/av1/decoder/grain_synthesis.c",
     "libaom/av1/decoder/obu.c",
 ]
 
@@ -135,21 +136,21 @@ aom_av1_encoder_asm_ssse3_x86_64 = [
 ]
 
 aom_av1_encoder_intrin_avx2 = [
-    "libaom/av1/encoder/x86/av1_quantize_avx2.c",
+    "libaom/av1/encoder/x86/av1_fwd_txfm2d_avx2.c",
     "libaom/av1/encoder/x86/av1_highbd_quantize_avx2.c",
+    "libaom/av1/encoder/x86/av1_k_means_avx2.c",
+    "libaom/av1/encoder/x86/av1_quantize_avx2.c",
+    "libaom/av1/encoder/x86/cnn_avx2.c",
     "libaom/av1/encoder/x86/corner_match_avx2.c",
+    "libaom/av1/encoder/x86/encodetxb_avx2.c",
     "libaom/av1/encoder/x86/error_intrin_avx2.c",
     "libaom/av1/encoder/x86/highbd_block_error_intrin_avx2.c",
-    "libaom/av1/encoder/x86/av1_fwd_txfm2d_avx2.c",
     "libaom/av1/encoder/x86/highbd_fwd_txfm_avx2.c",
-    "libaom/av1/encoder/x86/wedge_utils_avx2.c",
-    "libaom/av1/encoder/x86/encodetxb_avx2.c",
-    "libaom/av1/encoder/x86/rdopt_avx2.c",
-    "libaom/av1/encoder/x86/av1_k_means_avx2.c",
-    "libaom/av1/encoder/x86/temporal_filter_avx2.c",
     "libaom/av1/encoder/x86/highbd_temporal_filter_avx2.c",
     "libaom/av1/encoder/x86/pickrst_avx2.c",
-    "libaom/av1/encoder/x86/cnn_avx2.c",
+    "libaom/av1/encoder/x86/rdopt_avx2.c",
+    "libaom/av1/encoder/x86/temporal_filter_avx2.c",
+    "libaom/av1/encoder/x86/wedge_utils_avx2.c",
 ]
 
 aom_av1_encoder_intrin_msa = [
@@ -159,26 +160,28 @@ aom_av1_encoder_intrin_msa = [
 ]
 
 aom_av1_encoder_intrin_neon = [
-    "libaom/av1/encoder/arm/neon/quantize_neon.c",
+    "libaom/av1/encoder/arm/neon/av1_error_neon.c",
+    "libaom/av1/encoder/arm/neon/av1_fwd_txfm2d_neon.c",
+    "libaom/av1/encoder/arm/neon/av1_highbd_quantize_neon.c",
+    "libaom/av1/encoder/arm/neon/encodetxb_neon.c",
+    "libaom/av1/encoder/arm/neon/highbd_fwd_txfm_neon.c",
+    "libaom/av1/encoder/arm/neon/hybrid_fwd_txfm_neon.c",
     "libaom/av1/encoder/arm/neon/ml_neon.c",
     "libaom/av1/encoder/arm/neon/picksrt_neon.c",
+    "libaom/av1/encoder/arm/neon/quantize_neon.c",
     "libaom/av1/encoder/arm/neon/rdopt_neon.c",
-    "libaom/av1/encoder/arm/neon/av1_error_neon.c",
-    "libaom/av1/encoder/arm/neon/encodetxb_neon.c",
-    "libaom/av1/encoder/arm/neon/hybrid_fwd_txfm_neon.c",
-    "libaom/av1/encoder/arm/neon/av1_fwd_txfm2d_neon.c",
-    "libaom/av1/encoder/arm/neon/highbd_fwd_txfm_neon.c",
 ]
 
 aom_av1_encoder_intrin_sse2 = [
     "libaom/av1/encoder/x86/av1_fwd_txfm_sse2.c",
+    "libaom/av1/encoder/x86/av1_k_means_sse2.c",
     "libaom/av1/encoder/x86/av1_quantize_sse2.c",
     "libaom/av1/encoder/x86/encodetxb_sse2.c",
+    "libaom/av1/encoder/x86/error_intrin_sse2.c",
     "libaom/av1/encoder/x86/highbd_block_error_intrin_sse2.c",
-    "libaom/av1/encoder/x86/temporal_filter_sse2.c",
-    "libaom/av1/encoder/x86/av1_k_means_sse2.c",
     "libaom/av1/encoder/x86/highbd_temporal_filter_sse2.c",
     "libaom/av1/encoder/x86/reconinter_enc_sse2.c",
+    "libaom/av1/encoder/x86/temporal_filter_sse2.c",
     "libaom/av1/encoder/x86/wedge_utils_sse2.c",
 ]
 
@@ -193,8 +196,8 @@ aom_av1_encoder_intrin_sse4_1 = [
     "libaom/av1/encoder/x86/corner_match_sse4.c",
     "libaom/av1/encoder/x86/encodetxb_sse4.c",
     "libaom/av1/encoder/x86/highbd_fwd_txfm_sse4.c",
-    "libaom/av1/encoder/x86/rdopt_sse4.c",
     "libaom/av1/encoder/x86/pickrst_sse4.c",
+    "libaom/av1/encoder/x86/rdopt_sse4.c",
 ]
 
 aom_av1_encoder_intrin_sse4_2 = [
@@ -207,12 +210,13 @@ aom_av1_encoder_intrin_ssse3 = [
 
 aom_av1_encoder_sources = [
     "libaom/av1/av1_cx_iface.c",
+    "libaom/av1/encoder/allintra_vis.c",
     "libaom/av1/encoder/aq_complexity.c",
     "libaom/av1/encoder/aq_cyclicrefresh.c",
     "libaom/av1/encoder/aq_variance.c",
-    "libaom/av1/encoder/allintra_vis.c",
     "libaom/av1/encoder/av1_fwd_txfm1d.c",
     "libaom/av1/encoder/av1_fwd_txfm2d.c",
+    "libaom/av1/encoder/av1_noise_estimate.c",
     "libaom/av1/encoder/av1_quantize.c",
     "libaom/av1/encoder/bitstream.c",
     "libaom/av1/encoder/cnn.c",
@@ -221,11 +225,12 @@ aom_av1_encoder_sources = [
     "libaom/av1/encoder/corner_detect.c",
     "libaom/av1/encoder/corner_match.c",
     "libaom/av1/encoder/cost.c",
+    "libaom/av1/encoder/dwt.c",
+    "libaom/av1/encoder/encode_strategy.c",
     "libaom/av1/encoder/encodeframe.c",
     "libaom/av1/encoder/encodeframe_utils.c",
     "libaom/av1/encoder/encodemb.c",
     "libaom/av1/encoder/encodemv.c",
-    "libaom/av1/encoder/encode_strategy.c",
     "libaom/av1/encoder/encoder.c",
     "libaom/av1/encoder/encoder_utils.c",
     "libaom/av1/encoder/encodetxb.c",
@@ -240,12 +245,14 @@ aom_av1_encoder_sources = [
     "libaom/av1/encoder/hash_motion.c",
     "libaom/av1/encoder/hybrid_fwd_txfm.c",
     "libaom/av1/encoder/interp_search.c",
+    "libaom/av1/encoder/intra_mode_search.c",
     "libaom/av1/encoder/level.c",
     "libaom/av1/encoder/lookahead.c",
     "libaom/av1/encoder/mcomp.c",
     "libaom/av1/encoder/ml.c",
     "libaom/av1/encoder/motion_search_facade.c",
     "libaom/av1/encoder/mv_prec.c",
+    "libaom/av1/encoder/nonrd_pickmode.c",
     "libaom/av1/encoder/palette.c",
     "libaom/av1/encoder/partition_search.c",
     "libaom/av1/encoder/partition_strategy.c",
@@ -257,7 +264,6 @@ aom_av1_encoder_sources = [
     "libaom/av1/encoder/ratectrl.c",
     "libaom/av1/encoder/rd.c",
     "libaom/av1/encoder/rdopt.c",
-    "libaom/av1/encoder/nonrd_pickmode.c",
     "libaom/av1/encoder/reconinter_enc.c",
     "libaom/av1/encoder/segmentation.c",
     "libaom/av1/encoder/speed_features.c",
@@ -269,15 +275,12 @@ aom_av1_encoder_sources = [
     "libaom/av1/encoder/tpl_model.c",
     "libaom/av1/encoder/tx_search.c",
     "libaom/av1/encoder/txb_rdopt.c",
-    "libaom/av1/encoder/intra_mode_search.c",
-    "libaom/av1/encoder/wedge_utils.c",
     "libaom/av1/encoder/var_based_part.c",
-    "libaom/av1/encoder/av1_noise_estimate.c",
+    "libaom/av1/encoder/wedge_utils.c",
     "libaom/third_party/fastfeat/fast.c",
     "libaom/third_party/fastfeat/fast_9.c",
     "libaom/third_party/fastfeat/nonmax.c",
     "libaom/third_party/vector/vector.c",
-    "libaom/av1/encoder/dwt.c",
 ]
 
 aom_dsp_common_asm_sse2 = [
@@ -298,12 +301,12 @@ aom_dsp_common_asm_ssse3 = [
 aom_dsp_common_intrin_avx2 = [
     "libaom/aom_dsp/x86/aom_convolve_copy_avx2.c",
     "libaom/aom_dsp/x86/aom_subpixel_8t_intrin_avx2.c",
+    "libaom/aom_dsp/x86/blend_a64_mask_avx2.c",
     "libaom/aom_dsp/x86/fft_avx2.c",
     "libaom/aom_dsp/x86/highbd_convolve_avx2.c",
     "libaom/aom_dsp/x86/highbd_loopfilter_avx2.c",
     "libaom/aom_dsp/x86/intrapred_avx2.c",
-    "libaom/aom_dsp/x86/blend_a64_mask_avx2.c",
-    "libaom/aom_dsp/x86/avg_intrin_avx2.c",
+    "libaom/aom_dsp/x86/loopfilter_avx2.c",
 ]
 
 aom_dsp_common_intrin_dspr2 = [
@@ -314,9 +317,9 @@ aom_dsp_common_intrin_dspr2 = [
     "libaom/aom_dsp/mips/convolve2_vert_dspr2.c",
     "libaom/aom_dsp/mips/convolve8_horiz_dspr2.c",
     "libaom/aom_dsp/mips/convolve8_vert_dspr2.c",
-    "libaom/aom_dsp/mips/intrapred16_dspr2.c",
     "libaom/aom_dsp/mips/intrapred4_dspr2.c",
     "libaom/aom_dsp/mips/intrapred8_dspr2.c",
+    "libaom/aom_dsp/mips/intrapred16_dspr2.c",
 ]
 
 aom_dsp_common_intrin_msa = [
@@ -328,30 +331,32 @@ aom_dsp_common_intrin_msa = [
 
 aom_dsp_common_intrin_neon = [
     "libaom/aom_dsp/arm/aom_convolve_copy_neon.c",
-    "libaom/aom_dsp/arm/fwd_txfm_neon.c",
-    "libaom/aom_dsp/arm/loopfilter_neon.c",
-    "libaom/aom_dsp/arm/intrapred_neon.c",
-    "libaom/aom_dsp/arm/subtract_neon.c",
     "libaom/aom_dsp/arm/blend_a64_mask_neon.c",
+    "libaom/aom_dsp/arm/fwd_txfm_neon.c",
+    "libaom/aom_dsp/arm/highbd_intrapred_neon.c",
+    "libaom/aom_dsp/arm/highbd_loopfilter_neon.c",
+    "libaom/aom_dsp/arm/intrapred_neon.c",
+    "libaom/aom_dsp/arm/loopfilter_neon.c",
+    "libaom/aom_dsp/arm/subtract_neon.c",
 ]
 
 aom_dsp_common_intrin_sse2 = [
+    "libaom/aom_dsp/x86/aom_asm_stubs.c",
     "libaom/aom_dsp/x86/aom_convolve_copy_sse2.c",
     "libaom/aom_dsp/x86/aom_subpixel_8t_intrin_sse2.c",
-    "libaom/aom_dsp/x86/aom_asm_stubs.c",
     "libaom/aom_dsp/x86/fft_sse2.c",
     "libaom/aom_dsp/x86/highbd_convolve_sse2.c",
     "libaom/aom_dsp/x86/highbd_intrapred_sse2.c",
     "libaom/aom_dsp/x86/highbd_loopfilter_sse2.c",
     "libaom/aom_dsp/x86/intrapred_sse2.c",
     "libaom/aom_dsp/x86/loopfilter_sse2.c",
-    "libaom/aom_dsp/x86/avg_intrin_sse2.c",
 ]
 
 aom_dsp_common_intrin_sse4_1 = [
     "libaom/aom_dsp/x86/blend_a64_hmask_sse4.c",
     "libaom/aom_dsp/x86/blend_a64_mask_sse4.c",
     "libaom/aom_dsp/x86/blend_a64_vmask_sse4.c",
+    "libaom/aom_dsp/x86/intrapred_sse4.c",
 ]
 
 aom_dsp_common_intrin_ssse3 = [
@@ -373,14 +378,12 @@ aom_dsp_common_sources = [
     "libaom/aom_dsp/loopfilter.c",
     "libaom/aom_dsp/odintrin.c",
     "libaom/aom_dsp/subtract.c",
-    "libaom/aom_dsp/avg.c",
 ]
 
 aom_dsp_decoder_sources = [
     "libaom/aom_dsp/binary_codes_reader.c",
     "libaom/aom_dsp/bitreader.c",
     "libaom/aom_dsp/entdec.c",
-    "libaom/aom_dsp/grain_synthesis.c",
 ]
 
 aom_encoder_stats_sources = [
