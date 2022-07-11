@@ -110,7 +110,7 @@ static const arg_def_t *svc_args[] = {
   &error_resilient_arg, &output_obu_arg, NULL
 };
 
-#define zero(Dest) memset(&(Dest), 0, sizeof(Dest));
+#define zero(Dest) memset(&(Dest), 0, sizeof(Dest))
 
 static const char *exec_name;
 
@@ -226,6 +226,7 @@ static aom_codec_err_t parse_layer_options_from_string(
     return AOM_CODEC_INVALID_PARAM;
 
   input_string = malloc(strlen(input));
+  if (!input_string) die("Failed to allocate input string.");
   memcpy(input_string, input, strlen(input));
   if (input_string == NULL) return AOM_CODEC_MEM_ERROR;
   token = strtok(input_string, delim);  // NOLINT
@@ -265,6 +266,10 @@ static void parse_command_line(int argc, const char **argv_,
 
   // process command line options
   argv = argv_dup(argc - 1, argv_ + 1);
+  if (!argv) {
+    fprintf(stderr, "Error allocating argument list\n");
+    exit(EXIT_FAILURE);
+  }
   for (argi = argj = argv; (*argj = *argi); argi += arg.argv_step) {
     arg.argv_step = 1;
 
@@ -284,8 +289,8 @@ static void parse_command_line(int argc, const char **argv_,
       svc_params->number_temporal_layers = arg_parse_uint(&arg);
     } else if (arg_match(&arg, &speed_arg, argi)) {
       app_input->speed = arg_parse_uint(&arg);
-      if (app_input->speed > 9) {
-        aom_tools_warn("Mapping speed %d to speed 9.\n", app_input->speed);
+      if (app_input->speed > 10) {
+        aom_tools_warn("Mapping speed %d to speed 10.\n", app_input->speed);
       }
     } else if (arg_match(&arg, &aqmode_arg, argi)) {
       app_input->aq_mode = arg_parse_uint(&arg);
@@ -560,7 +565,7 @@ static void set_layer_pattern(
     int layering_mode, int superframe_cnt, aom_svc_layer_id_t *layer_id,
     aom_svc_ref_frame_config_t *ref_frame_config,
     aom_svc_ref_frame_comp_pred_t *ref_frame_comp_pred, int *use_svc_control,
-    int spatial_layer_id, int is_key_frame, int ksvc_mode) {
+    int spatial_layer_id, int is_key_frame, int ksvc_mode, int speed) {
   int i;
   int enable_longterm_temporal_ref = 1;
   int shift = (layering_mode == 8) ? 2 : 0;
@@ -579,11 +584,9 @@ static void set_layer_pattern(
   for (i = 0; i < REF_FRAMES; i++) ref_frame_config->refresh[i] = 0;
 
   if (ksvc_mode) {
-    // Same pattern as case 9.
+    // Same pattern as case 9, but the reference strucutre will be constrained
+    // below.
     layering_mode = 9;
-    if (!is_key_frame)
-      // No inter-layer prediction on inter-frames.
-      ref_frame_config->reference[SVC_LAST_FRAME] = 1;
   }
   switch (layering_mode) {
     case 0:
@@ -646,8 +649,12 @@ static void set_layer_pattern(
 
       // Keep golden fixed at slot 3.
       ref_frame_config->ref_idx[SVC_GOLDEN_FRAME] = 3;
-      // Cyclically refresh slots 4, 5, 6, 7, for lag altref.
-      lag_index = 4 + (base_count % 4);
+      // Cyclically refresh slots 5, 6, 7, for lag altref.
+      lag_index = 5;
+      if (base_count > 0) {
+        lag_index = 5 + (base_count % 3);
+        if (superframe_cnt % 4 != 0) lag_index = 5 + ((base_count + 1) % 3);
+      }
       // Set the altref slot to lag_index.
       ref_frame_config->ref_idx[SVC_ALTREF_FRAME] = lag_index;
       if (superframe_cnt % 4 == 0) {
@@ -681,6 +688,8 @@ static void set_layer_pattern(
       // Every frame can reference GOLDEN AND ALTREF.
       ref_frame_config->reference[SVC_GOLDEN_FRAME] = 1;
       ref_frame_config->reference[SVC_ALTREF_FRAME] = 1;
+      // Allow for compound prediction using LAST and ALTREF.
+      if (speed >= 7) ref_frame_comp_pred->use_comp_pred[2] = 1;
       break;
     case 4:
       // 3-temporal layer: but middle layer updates GF, so 2nd TL2 will
@@ -846,10 +855,6 @@ static void set_layer_pattern(
           ref_frame_config->ref_idx[SVC_GOLDEN_FRAME] = 3;
         }
       }
-      if (layer_id->spatial_layer_id > 0 && !ksvc_mode) {
-        // Reference GOLDEN.
-        ref_frame_config->reference[SVC_GOLDEN_FRAME] = 1;
-      }
       break;
     case 8:
       // 3 spatial and 3 temporal layer.
@@ -979,9 +984,20 @@ static void set_layer_pattern(
           ref_frame_config->ref_idx[SVC_GOLDEN_FRAME] = 4;
         }
       }
-      if (layer_id->spatial_layer_id > 0 && !ksvc_mode)
-        // Reference GOLDEN.
+      if (layer_id->spatial_layer_id > 0) {
+        // Always reference GOLDEN (inter-layer prediction).
         ref_frame_config->reference[SVC_GOLDEN_FRAME] = 1;
+        if (ksvc_mode) {
+          // KSVC: only keep the inter-layer reference (GOLDEN) for
+          // superframes whose base is key.
+          if (!is_key_frame) ref_frame_config->reference[SVC_GOLDEN_FRAME] = 0;
+        }
+        if (is_key_frame && layer_id->spatial_layer_id > 1) {
+          // On superframes whose base is key: remove LAST to avoid prediction
+          // off layer two levels below.
+          ref_frame_config->reference[SVC_LAST_FRAME] = 0;
+        }
+      }
       // For 3 spatial layer case 8 (where there is free buffer slot):
       // allow for top spatial layer to use additional temporal reference.
       // Additional reference is only updated on base temporal layer, every
@@ -1154,7 +1170,7 @@ int main(int argc, const char **argv) {
   // Y4M reader has its own allocation.
   if (app_input.input_ctx.file_type != FILE_TYPE_Y4M) {
     if (!aom_img_alloc(&raw, AOM_IMG_FMT_I420, width, height, 32)) {
-      die("Failed to allocate image", width, height);
+      die("Failed to allocate image (%dx%d)", width, height);
     }
   }
 
@@ -1241,7 +1257,8 @@ int main(int argc, const char **argv) {
   aom_codec_control(&codec, AOME_SET_CPUUSED, app_input.speed);
   aom_codec_control(&codec, AV1E_SET_AQ_MODE, app_input.aq_mode ? 3 : 0);
   aom_codec_control(&codec, AV1E_SET_GF_CBR_BOOST_PCT, 0);
-  aom_codec_control(&codec, AV1E_SET_ENABLE_CDEF, 1);
+  aom_codec_control(&codec, AV1E_SET_ENABLE_CDEF, 2);
+  aom_codec_control(&codec, AV1E_SET_LOOPFILTER_CONTROL, 2);
   aom_codec_control(&codec, AV1E_SET_ENABLE_WARPED_MOTION, 0);
   aom_codec_control(&codec, AV1E_SET_ENABLE_OBMC, 0);
   aom_codec_control(&codec, AV1E_SET_ENABLE_GLOBAL_MOTION, 0);
@@ -1293,13 +1310,13 @@ int main(int argc, const char **argv) {
   while (frame_avail || got_data) {
     struct aom_usec_timer timer;
     frame_avail = read_frame(&(app_input.input_ctx), &raw);
-    int is_key_frame = (frame_cnt % cfg.kf_max_dist) == 0;
     // Loop over spatial layers.
     for (unsigned int slx = 0; slx < ss_number_layers; slx++) {
       aom_codec_iter_t iter = NULL;
       const aom_codec_cx_pkt_t *pkt;
       int layer = 0;
-
+      // Flag for superframe whose base is key.
+      int is_key_frame = (frame_cnt % cfg.kf_max_dist) == 0;
       // For flexible mode:
       if (app_input.layering_mode >= 0) {
         // Set the reference/update flags, layer_id, and reference_map
@@ -1307,7 +1324,7 @@ int main(int argc, const char **argv) {
         set_layer_pattern(app_input.layering_mode, frame_cnt, &layer_id,
                           &ref_frame_config, &ref_frame_comp_pred,
                           &use_svc_control, slx, is_key_frame,
-                          (app_input.layering_mode == 10));
+                          (app_input.layering_mode == 10), app_input.speed);
         aom_codec_control(&codec, AV1E_SET_SVC_LAYER_ID, &layer_id);
         if (use_svc_control) {
           aom_codec_control(&codec, AV1E_SET_SVC_REF_FRAME_CONFIG,
