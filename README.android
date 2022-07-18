@@ -1,12 +1,12 @@
 Name: libaom
 URL: https://aomedia.org
-Version: v3.2.0
+Version: v3.4.0
 License: BSD
 License File: libaom/LICENSE
 
-Date: Wednesday October 14 2021
-Branch: daringdo
-Commit: 287164de79516c25c8c84fd544f67752c170082a
+Date: Thursday June 30 2022
+Branch: fluttershy
+Commit: fc430c57c7b0307b4c5ffb686cd90b3c010d08d2
 
 Description:
 Contains the sources used to compile libaom.
