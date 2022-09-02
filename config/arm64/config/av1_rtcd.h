@@ -372,11 +372,11 @@ void av1_round_shift_array_neon(int32_t *arr, int size, int bit);
 #define av1_round_shift_array av1_round_shift_array_neon
 
 int av1_selfguided_restoration_c(const uint8_t *dgd8, int width, int height,
-                                  int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
-                                  int sgr_params_idx, int bit_depth, int highbd);
+                                int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
+                                int sgr_params_idx, int bit_depth, int highbd);
 int av1_selfguided_restoration_neon(const uint8_t *dgd8, int width, int height,
-                                  int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
-                                  int sgr_params_idx, int bit_depth, int highbd);
+                                int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
+                                int sgr_params_idx, int bit_depth, int highbd);
 #define av1_selfguided_restoration av1_selfguided_restoration_neon
 
 void av1_upsample_intra_edge_c(uint8_t *p, int sz);
@@ -401,13 +401,45 @@ void cdef_copy_rect8_8bit_to_16bit_c(uint16_t *dst, int dstride, const uint8_t *
 void cdef_copy_rect8_8bit_to_16bit_neon(uint16_t *dst, int dstride, const uint8_t *src, int sstride, int v, int h);
 #define cdef_copy_rect8_8bit_to_16bit cdef_copy_rect8_8bit_to_16bit_neon
 
-void cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int bsize, int coeff_shift);
-void cdef_filter_block_neon(uint8_t *dst8, uint16_t *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int bsize, int coeff_shift);
-#define cdef_filter_block cdef_filter_block_neon
+void cdef_filter_16_0_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_16_0_neon(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_0 cdef_filter_16_0_neon
+
+void cdef_filter_16_1_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_16_1_neon(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_1 cdef_filter_16_1_neon
+
+void cdef_filter_16_2_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_16_2_neon(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_2 cdef_filter_16_2_neon
+
+void cdef_filter_16_3_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_16_3_neon(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_3 cdef_filter_16_3_neon
+
+void cdef_filter_8_0_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_8_0_neon(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_0 cdef_filter_8_0_neon
+
+void cdef_filter_8_1_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_8_1_neon(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_1 cdef_filter_8_1_neon
+
+void cdef_filter_8_2_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_8_2_neon(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_2 cdef_filter_8_2_neon
+
+void cdef_filter_8_3_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+void cdef_filter_8_3_neon(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_3 cdef_filter_8_3_neon
 
 int cdef_find_dir_c(const uint16_t *img, int stride, int32_t *var, int coeff_shift);
 int cdef_find_dir_neon(const uint16_t *img, int stride, int32_t *var, int coeff_shift);
 #define cdef_find_dir cdef_find_dir_neon
+
+void cdef_find_dir_dual_c(const uint16_t *img1, const uint16_t *img2, int stride, int32_t *var1, int32_t *var2, int coeff_shift, int *out1, int *out2);
+void cdef_find_dir_dual_neon(const uint16_t *img1, const uint16_t *img2, int stride, int32_t *var1, int32_t *var2, int coeff_shift, int *out1, int *out2);
+#define cdef_find_dir_dual cdef_find_dir_dual_neon
 
 cfl_subsample_hbd_fn cfl_get_luma_subsampling_420_hbd_c(TX_SIZE tx_size);
 cfl_subsample_hbd_fn cfl_get_luma_subsampling_420_hbd_neon(TX_SIZE tx_size);
