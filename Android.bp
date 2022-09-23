@@ -283,6 +283,12 @@ aom_av1_encoder_sources = [
     "libaom/third_party/vector/vector.c",
 ]
 
+aom_av1_rc_qmode_sources = [
+    "libaom/av1/ratectrl_qmode_interface.cc",
+    "libaom/av1/ratectrl_qmode.cc",
+    "libaom/av1/reference_manager.cc",
+]
+
 aom_dsp_common_asm_sse2 = [
     "libaom/aom_dsp/x86/aom_high_subpixel_8t_sse2.asm",
     "libaom/aom_dsp/x86/aom_high_subpixel_bilinear_sse2.asm",
@@ -386,6 +392,122 @@ aom_dsp_decoder_sources = [
     "libaom/aom_dsp/entdec.c",
 ]
 
+aom_dsp_encoder_asm_sse2 = [
+    "libaom/aom_dsp/x86/highbd_sad4d_sse2.asm",
+    "libaom/aom_dsp/x86/highbd_sad_sse2.asm",
+    "libaom/aom_dsp/x86/highbd_subpel_variance_impl_sse2.asm",
+    "libaom/aom_dsp/x86/highbd_variance_impl_sse2.asm",
+    "libaom/aom_dsp/x86/sad4d_sse2.asm",
+    "libaom/aom_dsp/x86/sad_sse2.asm",
+    "libaom/aom_dsp/x86/subpel_variance_sse2.asm",
+    "libaom/aom_dsp/x86/subtract_sse2.asm",
+]
+
+aom_dsp_encoder_asm_sse2_x86_64 = [
+    "libaom/aom_dsp/x86/ssim_sse2_x86_64.asm",
+]
+
+aom_dsp_encoder_asm_ssse3_x86_64 = [
+    "libaom/aom_dsp/x86/fwd_txfm_ssse3_x86_64.asm",
+    "libaom/aom_dsp/x86/quantize_ssse3_x86_64.asm",
+]
+
+aom_dsp_encoder_intrin_avx = [
+    "libaom/aom_dsp/x86/aom_quantize_avx.c",
+]
+
+aom_dsp_encoder_intrin_avx2 = [
+    "libaom/aom_dsp/x86/adaptive_quantize_avx2.c",
+    "libaom/aom_dsp/x86/avg_intrin_avx2.c",
+    "libaom/aom_dsp/x86/blk_sse_sum_avx2.c",
+    "libaom/aom_dsp/x86/highbd_quantize_intrin_avx2.c",
+    "libaom/aom_dsp/x86/highbd_adaptive_quantize_avx2.c",
+    "libaom/aom_dsp/x86/highbd_sad_avx2.c",
+    "libaom/aom_dsp/x86/highbd_variance_avx2.c",
+    "libaom/aom_dsp/x86/masked_sad_intrin_avx2.c",
+    "libaom/aom_dsp/x86/obmc_sad_avx2.c",
+    "libaom/aom_dsp/x86/obmc_variance_avx2.c",
+    "libaom/aom_dsp/x86/sad4d_avx2.c",
+    "libaom/aom_dsp/x86/sad_avx2.c",
+    "libaom/aom_dsp/x86/sad_impl_avx2.c",
+    "libaom/aom_dsp/x86/subtract_avx2.c",
+    "libaom/aom_dsp/x86/sse_avx2.c",
+    "libaom/aom_dsp/x86/sum_squares_avx2.c",
+    "libaom/aom_dsp/x86/variance_avx2.c",
+    "libaom/aom_dsp/x86/variance_impl_avx2.c",
+]
+
+aom_dsp_encoder_intrin_msa = [
+    "libaom/aom_dsp/mips/sad_msa.c",
+    "libaom/aom_dsp/mips/subtract_msa.c",
+    "libaom/aom_dsp/mips/variance_msa.c",
+    "libaom/aom_dsp/mips/sub_pixel_variance_msa.c",
+]
+
+aom_dsp_encoder_intrin_neon = [
+    "libaom/aom_dsp/arm/avg_neon.c",
+    "libaom/aom_dsp/arm/hadamard_neon.c",
+    "libaom/aom_dsp/arm/highbd_quantize_neon.c",
+    "libaom/aom_dsp/arm/highbd_variance_neon.c",
+    "libaom/aom_dsp/arm/sad4d_neon.c",
+    "libaom/aom_dsp/arm/sad_neon.c",
+    "libaom/aom_dsp/arm/subpel_variance_neon.c",
+    "libaom/aom_dsp/arm/sse_neon.c",
+    "libaom/aom_dsp/arm/sum_squares_neon.c",
+    "libaom/aom_dsp/arm/variance_neon.c",
+]
+
+aom_dsp_encoder_intrin_sse2 = [
+    "libaom/aom_dsp/x86/adaptive_quantize_sse2.c",
+    "libaom/aom_dsp/x86/avg_intrin_sse2.c",
+    "libaom/aom_dsp/x86/blk_sse_sum_sse2.c",
+    "libaom/aom_dsp/x86/fwd_txfm_sse2.c",
+    "libaom/aom_dsp/x86/highbd_adaptive_quantize_sse2.c",
+    "libaom/aom_dsp/x86/highbd_quantize_intrin_sse2.c",
+    "libaom/aom_dsp/x86/highbd_subtract_sse2.c",
+    "libaom/aom_dsp/x86/highbd_variance_sse2.c",
+    "libaom/aom_dsp/x86/quantize_sse2.c",
+    "libaom/aom_dsp/x86/sum_squares_sse2.c",
+    "libaom/aom_dsp/x86/variance_sse2.c",
+]
+
+aom_dsp_encoder_intrin_sse4_1 = [
+    "libaom/aom_dsp/x86/sse_sse4.c",
+    "libaom/aom_dsp/x86/highbd_variance_sse4.c",
+    "libaom/aom_dsp/x86/obmc_sad_sse4.c",
+    "libaom/aom_dsp/x86/obmc_variance_sse4.c",
+]
+
+aom_dsp_encoder_intrin_ssse3 = [
+    "libaom/aom_dsp/x86/jnt_variance_ssse3.c",
+    "libaom/aom_dsp/x86/jnt_sad_ssse3.c",
+    "libaom/aom_dsp/x86/masked_sad_intrin_ssse3.c",
+    "libaom/aom_dsp/x86/masked_sad4d_ssse3.c",
+    "libaom/aom_dsp/x86/masked_variance_intrin_ssse3.c",
+    "libaom/aom_dsp/x86/quantize_ssse3.c",
+    "libaom/aom_dsp/x86/variance_impl_ssse3.c",
+]
+
+aom_dsp_encoder_sources = [
+    "libaom/aom_dsp/avg.c",
+    "libaom/aom_dsp/binary_codes_writer.c",
+    "libaom/aom_dsp/bitwriter.c",
+    "libaom/aom_dsp/blk_sse_sum.c",
+    "libaom/aom_dsp/entenc.c",
+    "libaom/aom_dsp/fwd_txfm.c",
+    "libaom/aom_dsp/grain_table.c",
+    "libaom/aom_dsp/noise_model.c",
+    "libaom/aom_dsp/noise_util.c",
+    "libaom/aom_dsp/psnr.c",
+    "libaom/aom_dsp/quantize.c",
+    "libaom/aom_dsp/sad.c",
+    "libaom/aom_dsp/sad_av1.c",
+    "libaom/aom_dsp/sse.c",
+    "libaom/aom_dsp/ssim.c",
+    "libaom/aom_dsp/sum_squares.c",
+    "libaom/aom_dsp/variance.c",
+]
+
 aom_encoder_stats_sources = [
     "libaom/stats/aomstats.c",
     "libaom/stats/rate_hist.c",
@@ -397,6 +519,14 @@ aom_mem_sources = [
 
 aom_ports_asm_x86 = [
     "libaom/aom_ports/float.asm",
+]
+
+aom_rc_interface_sources = [
+    "libaom/test/encode_test_driver.cc",
+    "libaom/test/decode_test_driver.cc",
+    "libaom/test/test_aom_rc_interface.cc",
+    "libaom/test/ratectrl_rtc_test.cc",
+    "libaom/common/y4minput.c",
 ]
 
 aom_rtcd_sources = [
@@ -437,6 +567,10 @@ aom_webm_encoder_sources = [
     "libaom/common/webmenc.cc",
 ]
 
+av1_rc_qmode_sources = [
+    "libaom/test/ratectrl_qmode_test.cc",
+]
+
 aom_rtcd_sources_gen = [
 ]
 
@@ -446,6 +580,8 @@ aom_sources_gen = [
 
 aom_version_sources_gen = [
 ]
+
+aom_av1_common_sources += ["libaom/common/av1_config.c"]
 
 package {
     default_applicable_licenses: ["external_libaom_license"],
@@ -493,6 +629,12 @@ cc_library_static {
         "libaom",
     ],
 
+    min_sdk_version: "29",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+    ],
+
     arch: {
         arm64: {
             local_include_dirs: [
@@ -510,7 +652,11 @@ cc_library_static {
                 aom_sources +
                 aom_util_sources +
                 aom_av1_common_intrin_neon +
-                aom_dsp_common_intrin_neon,
+                aom_dsp_common_intrin_neon +
+                aom_av1_encoder_intrin_neon +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_intrin_neon +
+                aom_dsp_encoder_sources,
         },
 
         // configured to require the neon unit
@@ -531,7 +677,11 @@ cc_library_static {
                     aom_sources +
                     aom_util_sources +
                     aom_av1_common_intrin_neon +
-                    aom_dsp_common_intrin_neon,
+                    aom_dsp_common_intrin_neon +
+                    aom_av1_encoder_intrin_neon +
+                    aom_av1_encoder_sources +
+                    aom_dsp_encoder_intrin_neon +
+                    aom_dsp_encoder_sources,
             },
         },
 
@@ -558,7 +708,19 @@ cc_library_static {
                 aom_av1_common_intrin_sse2 +
                 aom_dsp_common_intrin_sse2 +
                 aom_av1_common_intrin_ssse3 +
-                aom_dsp_common_intrin_ssse3,
+                aom_dsp_common_intrin_ssse3 +
+                aom_av1_encoder_asm_sse2 +
+                aom_av1_encoder_asm_ssse3_x86_64 +
+                aom_av1_encoder_intrin_sse2 +
+                aom_av1_encoder_intrin_sse3 +
+                aom_av1_encoder_intrin_ssse3 +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_asm_sse2 +
+                aom_dsp_encoder_asm_sse2_x86_64 +
+                aom_dsp_encoder_asm_ssse3_x86_64 +
+                aom_dsp_encoder_intrin_sse2 +
+                aom_dsp_encoder_intrin_ssse3 +
+                aom_dsp_encoder_sources,
         },
 
         x86: {
@@ -584,7 +746,16 @@ cc_library_static {
                 aom_av1_common_intrin_sse2 +
                 aom_dsp_common_intrin_sse2 +
                 aom_av1_common_intrin_ssse3 +
-                aom_dsp_common_intrin_ssse3,
+                aom_dsp_common_intrin_ssse3 +
+                aom_av1_encoder_asm_sse2 +
+                aom_av1_encoder_intrin_sse2 +
+                aom_av1_encoder_intrin_sse3 +
+                aom_av1_encoder_intrin_ssse3 +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_asm_sse2 +
+                aom_dsp_encoder_intrin_sse2 +
+                aom_dsp_encoder_intrin_ssse3 +
+                aom_dsp_encoder_sources,
         },
 
     },
