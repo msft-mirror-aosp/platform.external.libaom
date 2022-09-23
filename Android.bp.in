@@ -1,3 +1,6 @@
+aom_av1_common_sources +=
+["libaom/common/av1_config.c"]
+
 package {
     default_applicable_licenses: ["external_libaom_license"],
 }
@@ -44,6 +47,12 @@ cc_library_static {
         "libaom",
     ],
 
+    min_sdk_version: "29",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+    ],
+
     arch: {
         arm64: {
             local_include_dirs: [
@@ -61,7 +70,11 @@ cc_library_static {
                 aom_sources +
                 aom_util_sources +
                 aom_av1_common_intrin_neon +
-                aom_dsp_common_intrin_neon,
+                aom_dsp_common_intrin_neon +
+                aom_av1_encoder_intrin_neon +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_intrin_neon +
+                aom_dsp_encoder_sources,
         },
 
         // configured to require the neon unit
@@ -82,7 +95,11 @@ cc_library_static {
                     aom_sources +
                     aom_util_sources +
                     aom_av1_common_intrin_neon +
-                    aom_dsp_common_intrin_neon,
+                    aom_dsp_common_intrin_neon +
+                    aom_av1_encoder_intrin_neon +
+                    aom_av1_encoder_sources +
+                    aom_dsp_encoder_intrin_neon +
+                    aom_dsp_encoder_sources,
             },
         },
 
@@ -109,7 +126,19 @@ cc_library_static {
                 aom_av1_common_intrin_sse2 +
                 aom_dsp_common_intrin_sse2 +
                 aom_av1_common_intrin_ssse3 +
-                aom_dsp_common_intrin_ssse3,
+                aom_dsp_common_intrin_ssse3 +
+                aom_av1_encoder_asm_sse2 +
+                aom_av1_encoder_asm_ssse3_x86_64 +
+                aom_av1_encoder_intrin_sse2 +
+                aom_av1_encoder_intrin_sse3 +
+                aom_av1_encoder_intrin_ssse3 +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_asm_sse2 +
+                aom_dsp_encoder_asm_sse2_x86_64 +
+                aom_dsp_encoder_asm_ssse3_x86_64 +
+                aom_dsp_encoder_intrin_sse2 +
+                aom_dsp_encoder_intrin_ssse3 +
+                aom_dsp_encoder_sources,
         },
 
         x86: {
@@ -135,7 +164,16 @@ cc_library_static {
                 aom_av1_common_intrin_sse2 +
                 aom_dsp_common_intrin_sse2 +
                 aom_av1_common_intrin_ssse3 +
-                aom_dsp_common_intrin_ssse3,
+                aom_dsp_common_intrin_ssse3 +
+                aom_av1_encoder_asm_sse2 +
+                aom_av1_encoder_intrin_sse2 +
+                aom_av1_encoder_intrin_sse3 +
+                aom_av1_encoder_intrin_ssse3 +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_asm_sse2 +
+                aom_dsp_encoder_intrin_sse2 +
+                aom_dsp_encoder_intrin_ssse3 +
+                aom_dsp_encoder_sources,
         },
 
     },
