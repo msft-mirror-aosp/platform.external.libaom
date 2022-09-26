@@ -284,8 +284,8 @@ aom_av1_encoder_sources = [
 ]
 
 aom_av1_rc_qmode_sources = [
-    "libaom/av1/ratectrl_qmode_interface.cc",
     "libaom/av1/ratectrl_qmode.cc",
+    "libaom/av1/ratectrl_qmode_interface.cc",
     "libaom/av1/reference_manager.cc",
 ]
 
@@ -420,8 +420,8 @@ aom_dsp_encoder_intrin_avx2 = [
     "libaom/aom_dsp/x86/adaptive_quantize_avx2.c",
     "libaom/aom_dsp/x86/avg_intrin_avx2.c",
     "libaom/aom_dsp/x86/blk_sse_sum_avx2.c",
-    "libaom/aom_dsp/x86/highbd_quantize_intrin_avx2.c",
     "libaom/aom_dsp/x86/highbd_adaptive_quantize_avx2.c",
+    "libaom/aom_dsp/x86/highbd_quantize_intrin_avx2.c",
     "libaom/aom_dsp/x86/highbd_sad_avx2.c",
     "libaom/aom_dsp/x86/highbd_variance_avx2.c",
     "libaom/aom_dsp/x86/masked_sad_intrin_avx2.c",
@@ -430,8 +430,8 @@ aom_dsp_encoder_intrin_avx2 = [
     "libaom/aom_dsp/x86/sad4d_avx2.c",
     "libaom/aom_dsp/x86/sad_avx2.c",
     "libaom/aom_dsp/x86/sad_impl_avx2.c",
-    "libaom/aom_dsp/x86/subtract_avx2.c",
     "libaom/aom_dsp/x86/sse_avx2.c",
+    "libaom/aom_dsp/x86/subtract_avx2.c",
     "libaom/aom_dsp/x86/sum_squares_avx2.c",
     "libaom/aom_dsp/x86/variance_avx2.c",
     "libaom/aom_dsp/x86/variance_impl_avx2.c",
@@ -439,9 +439,9 @@ aom_dsp_encoder_intrin_avx2 = [
 
 aom_dsp_encoder_intrin_msa = [
     "libaom/aom_dsp/mips/sad_msa.c",
+    "libaom/aom_dsp/mips/sub_pixel_variance_msa.c",
     "libaom/aom_dsp/mips/subtract_msa.c",
     "libaom/aom_dsp/mips/variance_msa.c",
-    "libaom/aom_dsp/mips/sub_pixel_variance_msa.c",
 ]
 
 aom_dsp_encoder_intrin_neon = [
@@ -451,8 +451,8 @@ aom_dsp_encoder_intrin_neon = [
     "libaom/aom_dsp/arm/highbd_variance_neon.c",
     "libaom/aom_dsp/arm/sad4d_neon.c",
     "libaom/aom_dsp/arm/sad_neon.c",
-    "libaom/aom_dsp/arm/subpel_variance_neon.c",
     "libaom/aom_dsp/arm/sse_neon.c",
+    "libaom/aom_dsp/arm/subpel_variance_neon.c",
     "libaom/aom_dsp/arm/sum_squares_neon.c",
     "libaom/aom_dsp/arm/variance_neon.c",
 ]
@@ -472,17 +472,17 @@ aom_dsp_encoder_intrin_sse2 = [
 ]
 
 aom_dsp_encoder_intrin_sse4_1 = [
-    "libaom/aom_dsp/x86/sse_sse4.c",
     "libaom/aom_dsp/x86/highbd_variance_sse4.c",
     "libaom/aom_dsp/x86/obmc_sad_sse4.c",
     "libaom/aom_dsp/x86/obmc_variance_sse4.c",
+    "libaom/aom_dsp/x86/sse_sse4.c",
 ]
 
 aom_dsp_encoder_intrin_ssse3 = [
-    "libaom/aom_dsp/x86/jnt_variance_ssse3.c",
     "libaom/aom_dsp/x86/jnt_sad_ssse3.c",
-    "libaom/aom_dsp/x86/masked_sad_intrin_ssse3.c",
+    "libaom/aom_dsp/x86/jnt_variance_ssse3.c",
     "libaom/aom_dsp/x86/masked_sad4d_ssse3.c",
+    "libaom/aom_dsp/x86/masked_sad_intrin_ssse3.c",
     "libaom/aom_dsp/x86/masked_variance_intrin_ssse3.c",
     "libaom/aom_dsp/x86/quantize_ssse3.c",
     "libaom/aom_dsp/x86/variance_impl_ssse3.c",
@@ -522,11 +522,11 @@ aom_ports_asm_x86 = [
 ]
 
 aom_rc_interface_sources = [
-    "libaom/test/encode_test_driver.cc",
-    "libaom/test/decode_test_driver.cc",
-    "libaom/test/test_aom_rc_interface.cc",
-    "libaom/test/ratectrl_rtc_test.cc",
     "libaom/common/y4minput.c",
+    "libaom/test/decode_test_driver.cc",
+    "libaom/test/encode_test_driver.cc",
+    "libaom/test/ratectrl_rtc_test.cc",
+    "libaom/test/test_aom_rc_interface.cc",
 ]
 
 aom_rtcd_sources = [
