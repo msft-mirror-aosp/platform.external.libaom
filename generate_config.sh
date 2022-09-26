@@ -166,7 +166,8 @@ rm -f "${BASE}/Android.bp"
 ) > "${BASE}/Android.bp"
 
 rm -f "${BASE}/libaom_srcs.gni"
-bpfmt -w "${BASE}/Android.bp" || echo "bpfmt not found: format Android.bp manually."
-
+bpfmt -s -w "${BASE}/Android.bp" \
+  || echo "bpfmt not found. Run 'm bpfmt' followed by" \
+          "'bpfmt -s -w ${BASE}/Android.bp'."
 
 clean
