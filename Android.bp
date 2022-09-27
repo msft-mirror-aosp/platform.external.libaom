@@ -284,6 +284,7 @@ aom_av1_encoder_sources = [
 ]
 
 aom_av1_rc_qmode_sources = [
+    "libaom/av1/ducky_encode.cc",
     "libaom/av1/ratectrl_qmode.cc",
     "libaom/av1/ratectrl_qmode_interface.cc",
     "libaom/av1/reference_manager.cc",
@@ -427,6 +428,7 @@ aom_dsp_encoder_intrin_avx2 = [
     "libaom/aom_dsp/x86/masked_sad_intrin_avx2.c",
     "libaom/aom_dsp/x86/obmc_sad_avx2.c",
     "libaom/aom_dsp/x86/obmc_variance_avx2.c",
+    "libaom/aom_dsp/x86/quantize_avx2.c",
     "libaom/aom_dsp/x86/sad4d_avx2.c",
     "libaom/aom_dsp/x86/sad_avx2.c",
     "libaom/aom_dsp/x86/sad_impl_avx2.c",
@@ -568,6 +570,9 @@ aom_webm_encoder_sources = [
 ]
 
 av1_rc_qmode_sources = [
+    "libaom/common/tools_common.c",
+    "libaom/common/y4minput.c",
+    "libaom/test/ducky_encode_test.cc",
     "libaom/test/ratectrl_qmode_test.cc",
 ]
 
@@ -579,6 +584,10 @@ aom_sources_gen = [
 ]
 
 aom_version_sources_gen = [
+]
+
+av1_rc_qmode_sources_gen = [
+    "libaom/gen_src/usage_exit.c",
 ]
 
 aom_av1_common_sources += ["libaom/common/av1_config.c"]

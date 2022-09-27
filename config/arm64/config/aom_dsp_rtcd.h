@@ -567,10 +567,6 @@ void aom_hadamard_8x8_c(const int16_t *src_diff, ptrdiff_t src_stride, tran_low_
 void aom_hadamard_8x8_neon(const int16_t *src_diff, ptrdiff_t src_stride, tran_low_t *coeff);
 #define aom_hadamard_8x8 aom_hadamard_8x8_neon
 
-void aom_hadamard_8x8_dual_c(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
-void aom_hadamard_8x8_dual_neon(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
-#define aom_hadamard_8x8_dual aom_hadamard_8x8_dual_neon
-
 void aom_hadamard_lp_16x16_c(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
 void aom_hadamard_lp_16x16_neon(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
 #define aom_hadamard_lp_16x16 aom_hadamard_lp_16x16_neon
@@ -578,6 +574,10 @@ void aom_hadamard_lp_16x16_neon(const int16_t *src_diff, ptrdiff_t src_stride, i
 void aom_hadamard_lp_8x8_c(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
 void aom_hadamard_lp_8x8_neon(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
 #define aom_hadamard_lp_8x8 aom_hadamard_lp_8x8_neon
+
+void aom_hadamard_lp_8x8_dual_c(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
+void aom_hadamard_lp_8x8_dual_neon(const int16_t *src_diff, ptrdiff_t src_stride, int16_t *coeff);
+#define aom_hadamard_lp_8x8_dual aom_hadamard_lp_8x8_dual_neon
 
 uint32_t aom_highbd_10_dist_wtd_sub_pixel_avg_variance128x128_c(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse, const uint8_t *second_pred, const DIST_WTD_COMP_PARAMS* jcp_param);
 #define aom_highbd_10_dist_wtd_sub_pixel_avg_variance128x128 aom_highbd_10_dist_wtd_sub_pixel_avg_variance128x128_c
@@ -2757,17 +2757,20 @@ void aom_highbd_quantize_b_32x32_neon(const tran_low_t *coeff_ptr, intptr_t n_co
 #define aom_highbd_quantize_b_32x32 aom_highbd_quantize_b_32x32_neon
 
 void aom_highbd_quantize_b_32x32_adaptive_c(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
-#define aom_highbd_quantize_b_32x32_adaptive aom_highbd_quantize_b_32x32_adaptive_c
+void aom_highbd_quantize_b_32x32_adaptive_neon(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
+#define aom_highbd_quantize_b_32x32_adaptive aom_highbd_quantize_b_32x32_adaptive_neon
 
 void aom_highbd_quantize_b_64x64_c(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
 void aom_highbd_quantize_b_64x64_neon(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
 #define aom_highbd_quantize_b_64x64 aom_highbd_quantize_b_64x64_neon
 
 void aom_highbd_quantize_b_64x64_adaptive_c(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
-#define aom_highbd_quantize_b_64x64_adaptive aom_highbd_quantize_b_64x64_adaptive_c
+void aom_highbd_quantize_b_64x64_adaptive_neon(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
+#define aom_highbd_quantize_b_64x64_adaptive aom_highbd_quantize_b_64x64_adaptive_neon
 
 void aom_highbd_quantize_b_adaptive_c(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
-#define aom_highbd_quantize_b_adaptive aom_highbd_quantize_b_adaptive_c
+void aom_highbd_quantize_b_adaptive_neon(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan);
+#define aom_highbd_quantize_b_adaptive aom_highbd_quantize_b_adaptive_neon
 
 unsigned int aom_highbd_sad128x128_c(const uint8_t *src_ptr, int src_stride, const uint8_t *ref_ptr, int ref_stride);
 #define aom_highbd_sad128x128 aom_highbd_sad128x128_c
