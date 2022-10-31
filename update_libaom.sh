@@ -20,7 +20,7 @@
 export LC_ALL=C
 
 die() {
-  echo "@"
+  echo "$@"
   exit 1
 }
 
@@ -29,9 +29,6 @@ GIT_REPO="https://aomedia.googlesource.com/aom"
 
 # Update to TOT by default.
 GIT_BRANCH="origin/master"
-
-# Relative path of target checkout.
-LIBAOM_SRC_DIR="libaom"
 
 BASE_DIR=`pwd`
 
@@ -47,15 +44,29 @@ fi
 prev_hash="$(egrep "^Commit: [[:alnum:]]" README.android | awk '{ print $2 }')"
 echo "prev_hash:$prev_hash"
 
-rm -rf $LIBAOM_SRC_DIR
-mkdir $LIBAOM_SRC_DIR || die "Unable to create ${LIBAOM_SRC_DIR}"
-cd $LIBAOM_SRC_DIR || die "Unable to enter ${LIBAOM_SRC_DIR}"
+REMOTE="update_upstream"
 
-# Start a local git repo.
-git clone $GIT_REPO .
+# Add a remote for upstream git repository
+git remote add $REMOTE $GIT_REPO
 
-# Switch the content to the desired revision.
-git checkout -b tot $GIT_BRANCH
+# Fetch remote's GIT_BRANCH
+git fetch $REMOTE $GIT_BRANCH --tags
+
+# Get commit id corresponding to branch/revision in upstream repository
+REMOTE_BRANCHES="$(git remote show $REMOTE)"
+
+if [[ "$REMOTE_BRANCHES" == *"$GIT_BRANCH"* ]]; then
+  UPSTREAM_COMMIT=$(git rev-list -n 1 $REMOTE/$GIT_BRANCH)
+else
+  UPSTREAM_COMMIT=$(git rev-list -n 1 $GIT_BRANCH)
+fi
+
+[ -z "$UPSTREAM_COMMIT" ] \
+    && die "Unable to get upstream commit corresponding to ${GIT_BRANCH}";
+
+# Merge $GIT_BRANCH by allowing unrelated histories and squashing the changes
+git merge -X theirs $UPSTREAM_COMMIT --allow-unrelated-histories \
+    --squash --no-commit
 
 add="$(git diff-index --diff-filter=A $prev_hash | \
 tr -s [:blank:] ' ' | cut -f6 -d\ )"
@@ -63,7 +74,7 @@ delete="$(git diff-index --diff-filter=D $prev_hash | \
 tr -s [:blank:] ' ' | cut -f6 -d\ )"
 
 # Get the current commit hash.
-hash=$(git log -1 --format="%H")
+hash=$(git log $UPSTREAM_COMMIT -1 --format="%H")
 
 # README reminder.
 echo "Update README.android:"
@@ -87,7 +98,7 @@ echo ""
 # Output log for upstream from current hash.
 if [ -n "$prev_hash" ]; then
   echo "git log from upstream:"
-  pretty_git_log="$(git log \
+  pretty_git_log="$(git log $UPSTREAM_COMMIT \
                     --no-merges \
                     --topo-order \
                     --pretty="%h %s" \
@@ -95,7 +106,7 @@ if [ -n "$prev_hash" ]; then
                     $prev_hash..$hash)"
   if [ -z "$pretty_git_log" ]; then
     echo "No log found. Checking for reverts."
-    pretty_git_log="$(git log \
+    pretty_git_log="$(git log $UPSTREAM_COMMIT \
                       --no-merges \
                       --topo-order \
                       --pretty="%h %s" \
@@ -110,7 +121,7 @@ if [ -n "$prev_hash" ]; then
 else
   # no previous hash
   echo "git log from upstream:"
-  pretty_git_log="$(git log \
+  pretty_git_log="$(git log $UPSTREAM_COMMIT \
                 --no-merges \
                 --topo-order \
                 --pretty="%h %s" \
@@ -122,14 +133,14 @@ fi
 echo ""
 echo "==============="
 
-# Git is useless now, remove the local git repo.
-rm -rf .git .gitignore .gitattributes
-
 # Add and remove files.
 echo "$add" | xargs -I {} git add {}
 echo "$delete" | xargs -I {} git rm --ignore-unmatch {}
 
 # Find empty directories and remove them.
 find . -type d -empty -exec git rm {} \;
+
+# Remove the remote added earlier
+git remote remove $REMOTE
 
 chmod 755 build/cmake/*.pl
