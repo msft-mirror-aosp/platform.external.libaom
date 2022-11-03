@@ -1,7 +1,3 @@
-// *** THIS PACKAGE HAS SPECIAL LICENSING CONDITIONS.  PLEASE
-//     CONSULT YOUR go/whichlawyer LEGAL TEAM MEMBER BEFORE
-//     DEPENDING ON IT IN YOUR PROJECT. ***
-
 aom_av1_common_sources +=
 ["libaom/common/av1_config.c"]
 
