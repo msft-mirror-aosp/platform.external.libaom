@@ -64,9 +64,7 @@ fi
 [ -z "$UPSTREAM_COMMIT" ] \
     && die "Unable to get upstream commit corresponding to ${GIT_BRANCH}";
 
-# Merge $GIT_BRANCH by allowing unrelated histories and squashing the changes
-git merge -X theirs $UPSTREAM_COMMIT --allow-unrelated-histories \
-    --squash --no-commit
+git merge $UPSTREAM_COMMIT
 
 add="$(git diff-index --diff-filter=A $prev_hash | \
 tr -s [:blank:] ' ' | cut -f6 -d\ )"
