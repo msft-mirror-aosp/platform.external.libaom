@@ -1,5 +1,5 @@
 aom_av1_common_sources +=
-["libaom/common/av1_config.c"]
+["common/av1_config.c"]
 
 package {
     default_applicable_licenses: ["external_libaom_license"],
@@ -30,8 +30,8 @@ license {
         "legacy_unencumbered",
     ],
     license_text: [
-        "libaom/LICENSE",
-        "libaom/PATENTS",
+        "LICENSE",
+        "PATENTS",
     ],
 }
 
@@ -44,7 +44,7 @@ cc_library_static {
     ],
 
     export_include_dirs: [
-        "libaom",
+        ".",
     ],
 
     min_sdk_version: "29",
@@ -64,7 +64,7 @@ cc_library_static {
                 aom_dsp_common_sources +
                 aom_dsp_decoder_sources +
                 aom_mem_sources +
-                ["libaom/aom_ports/arm_cpudetect.c"] +
+                ["aom_ports/arm_cpudetect.c"] +
                 aom_rtcd_sources +
                 aom_scale_sources +
                 aom_sources +
@@ -90,7 +90,7 @@ cc_library_static {
                     aom_dsp_decoder_sources +
                     aom_mem_sources +
                     aom_rtcd_sources +
-                    ["libaom/aom_ports/arm_cpudetect.c"] +
+                    ["aom_ports/arm_cpudetect.c"] +
                     aom_scale_sources +
                     aom_sources +
                     aom_util_sources +
@@ -188,7 +188,7 @@ cc_fuzz {
     name: "av1_dec_fuzzer",
     host_supported: true,
     srcs: [
-        "libaom/examples/av1_dec_fuzzer.cc",
+        "examples/av1_dec_fuzzer.cc",
     ],
     arch: {
         arm: {

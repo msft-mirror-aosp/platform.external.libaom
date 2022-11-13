@@ -32,9 +32,9 @@ set -eE
 export LC_ALL=C
 
 BASE=$(pwd)
-SRC="${BASE}/libaom"
+SRC="${BASE}"
 CFG="${BASE}/config"
-TMP=$(mktemp -d "${BASE}/build.XXXX")
+TMP=$(mktemp -d "${BASE}/../build.XXXX")
 
 # Clean up and prepare config directory
 rm -rf "${CFG}"
@@ -146,7 +146,7 @@ gen_config_files arm64 "${toolchain}/arm64-linux-gcc.cmake ${all_platforms}"
 #update_readme
 
 # libaom_srcs.gni was built for Chromium. Remove:
-# - the path prefix (//third_party/libaom/source/)
+# - the path prefix (//third_party/libaom/source/libaom/)
 # - comments (lines starting with #)
 # - header files
 # - perl scripts (rtcd)
@@ -161,7 +161,7 @@ rm -f "${BASE}/Android.bp"
   echo
   cat "${BASE}/libaom_srcs.gni" |
     grep -v ^\# |
-    sed 's/\/\/third_party\/libaom\/source\///' |
+    sed 's/\/\/third_party\/libaom\/source\/libaom\///' |
     grep -v h\",$ |
     grep -v pl\",$
   echo
