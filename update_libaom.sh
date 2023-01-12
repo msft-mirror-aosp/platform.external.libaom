@@ -28,7 +28,7 @@ die() {
 GIT_REPO="https://aomedia.googlesource.com/aom"
 
 # Update to TOT by default.
-GIT_BRANCH="origin/master"
+GIT_BRANCH="main"
 
 BASE_DIR=`pwd`
 
