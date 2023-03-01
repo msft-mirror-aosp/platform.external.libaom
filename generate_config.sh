@@ -21,6 +21,9 @@
 # Toolchain for arm64:
 # - gcc-aarch64-linux-gnu
 # - g++-aarch64-linux-gnu
+# Toolchain for riscv64:
+# - gcc-riscv64-linux-gnu
+# - g++-riscv64-linux-gnu
 # 32bit build environment for cmake. Including but potentially not limited to:
 # - lib32gcc-7-dev
 # - lib32stdc++-7-dev
@@ -140,6 +143,9 @@ gen_config_files arm "${toolchain}/armv7-linux-gcc.cmake ${all_platforms}"
 
 reset_dirs arm64
 gen_config_files arm64 "${toolchain}/arm64-linux-gcc.cmake ${all_platforms}"
+
+reset_dirs riscv64
+gen_config_files riscv64 "${toolchain}/riscv-linux-gcc.cmake ${all_platforms}"
 )
 
 # This needs to be run by update_libaom.sh before the .git file is removed.
