@@ -21,6 +21,9 @@
 # Toolchain for arm64:
 # - gcc-aarch64-linux-gnu
 # - g++-aarch64-linux-gnu
+# Toolchain for riscv64:
+# - gcc-riscv64-linux-gnu
+# - g++-riscv64-linux-gnu
 # 32bit build environment for cmake. Including but potentially not limited to:
 # - lib32gcc-7-dev
 # - lib32stdc++-7-dev
@@ -140,6 +143,9 @@ gen_config_files arm "${toolchain}/armv7-linux-gcc.cmake ${all_platforms}"
 
 reset_dirs arm64
 gen_config_files arm64 "${toolchain}/arm64-linux-gcc.cmake ${all_platforms}"
+
+reset_dirs riscv64
+gen_config_files riscv64 "${toolchain}/riscv-linux-gcc.cmake ${all_platforms}"
 )
 
 # This needs to be run by update_libaom.sh before the .git file is removed.
@@ -149,6 +155,7 @@ gen_config_files arm64 "${toolchain}/arm64-linux-gcc.cmake ${all_platforms}"
 # - the path prefix (//third_party/libaom/source/libaom/)
 # - comments (lines starting with #)
 # - header files
+# - inc files
 # - perl scripts (rtcd)
 
 rm -f "${BASE}/Android.bp"
@@ -162,8 +169,7 @@ rm -f "${BASE}/Android.bp"
   cat "${BASE}/libaom_srcs.gni" |
     grep -v ^\# |
     sed 's/\/\/third_party\/libaom\/source\/libaom\///' |
-    grep -v h\",$ |
-    grep -v pl\",$
+    grep -v -e 'h",$' -e 'inc",$' -e 'pl",$'
   echo
   cat "${BASE}/Android.bp.in"
 ) > "${BASE}/Android.bp"
