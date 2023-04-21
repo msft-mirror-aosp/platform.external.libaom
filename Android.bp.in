@@ -176,6 +176,25 @@ cc_library_static {
                 aom_dsp_encoder_sources,
         },
 
+        riscv64: {
+            local_include_dirs: [
+                "config/",
+                "config/riscv64/",
+            ],
+            cflags: [
+            ],
+            srcs: aom_av1_common_sources +
+                aom_av1_decoder_sources +
+                aom_dsp_common_sources +
+                aom_dsp_decoder_sources +
+                aom_mem_sources +
+                aom_rtcd_sources +
+                aom_scale_sources +
+                aom_sources +
+                aom_util_sources +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_sources,
+        },
     },
 
     sanitize: {
@@ -220,6 +239,14 @@ cc_fuzz {
                 "config/x86_64/",
             ],
         },
+
+        riscv64: {
+            local_include_dirs: [
+                "config/",
+                "config/riscv64/",
+            ],
+        },
+
     },
     static_libs: [
         "libaom",
