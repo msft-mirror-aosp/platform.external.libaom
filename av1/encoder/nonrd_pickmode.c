@@ -3043,9 +3043,10 @@ static void set_color_sensitivity(AV1_COMP *cpi, MACROBLOCK *x,
   int shift = 3;
   if (source_sad_nonrd >= kMedSad &&
       cpi->oxcf.tune_cfg.content != AOM_CONTENT_SCREEN &&
-      cpi->common.width * cpi->common.height >= 640 * 360)
+      (int64_t) cpi->common.width * (int64_t) cpi->common.height >=
+            (int64_t) 640 * 360) {
     shift = 4;
-  if (cpi->oxcf.tune_cfg.content == AOM_CONTENT_SCREEN &&
+  } else if (cpi->oxcf.tune_cfg.content == AOM_CONTENT_SCREEN &&
       cpi->rc.high_source_sad) {
     shift = 6;
   }
