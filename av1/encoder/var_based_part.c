@@ -951,7 +951,8 @@ static AOM_INLINE void chroma_check(AV1_COMP *cpi, MACROBLOCK *x,
     shift_lower_limit = 5;
   else if (source_sad_nonrd >= kMedSad &&
            cpi->oxcf.tune_cfg.content != AOM_CONTENT_SCREEN &&
-           cpi->common.width * cpi->common.height >= 640 * 360) {
+           (int64_t) cpi->common.width * (int64_t) cpi->common.height >=
+                (int64_t) 640 * 360) {
     shift_upper_limit = 2;
     shift_lower_limit = source_sad_nonrd > kMedSad ? 5 : 4;
   }
