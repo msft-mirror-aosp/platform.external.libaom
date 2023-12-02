@@ -38,8 +38,8 @@ list(APPEND AOM_TEST_DATA_FILE_NAMES
             "niklas_640_480_30.yuv"
             "vase10x10.yuv"
             "vase10x10_tiles.txt"
-            "firstpass_stats"
-            "bus_352x288_420_f20_b8.yuv")
+            "bus_352x288_420_f20_b8.yuv"
+            "test_input_w1h1.yuv")
 
 if(ENABLE_DECODE_PERF_TESTS AND CONFIG_AV1_ENCODER)
   list(APPEND AOM_TEST_DATA_FILE_NAMES "niklas_1280_720_30.yuv")
@@ -552,6 +552,7 @@ if(CONFIG_AV1_DECODER)
               "invalid-oss-fuzz-10705.ivf"
               "invalid-oss-fuzz-10705.ivf.res"
               "invalid-oss-fuzz-10723.ivf"
+              "invalid-oss-fuzz-10723.ivf.res.2"
               "invalid-oss-fuzz-10723.ivf.res.3"
               "invalid-oss-fuzz-10779.ivf"
               "invalid-oss-fuzz-10779.ivf.res"
