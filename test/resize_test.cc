@@ -96,11 +96,17 @@ struct FrameInfo {
 };
 
 void ScaleForFrameNumber(unsigned int frame, unsigned int initial_w,
-                         unsigned int initial_h, unsigned int *w,
-                         unsigned int *h, int flag_codec) {
+                         unsigned int initial_h, int flag_codec,
+                         bool change_start_resln, unsigned int *w,
+                         unsigned int *h) {
   if (frame < 10) {
-    *w = initial_w;
-    *h = initial_h;
+    if (change_start_resln) {
+      *w = initial_w / 4;
+      *h = initial_h / 4;
+    } else {
+      *w = initial_w;
+      *h = initial_h;
+    }
     return;
   }
   if (frame < 20) {
@@ -179,15 +185,25 @@ class ResizingVideoSource : public ::libaom_test::DummyVideoSource {
     limit_ = 150;
   }
   int flag_codec_;
+  bool change_start_resln_;
   virtual ~ResizingVideoSource() {}
 
  protected:
-  virtual void Next() {
+  void Begin() override {
+    frame_ = 0;
+    unsigned int width;
+    unsigned int height;
+    ScaleForFrameNumber(frame_, kInitialWidth, kInitialHeight, flag_codec_,
+                        change_start_resln_, &width, &height);
+    SetSize(width, height);
+    FillFrame();
+  }
+  void Next() override {
     ++frame_;
     unsigned int width;
     unsigned int height;
-    ScaleForFrameNumber(frame_, kInitialWidth, kInitialHeight, &width, &height,
-                        flag_codec_);
+    ScaleForFrameNumber(frame_, kInitialWidth, kInitialHeight, flag_codec_,
+                        change_start_resln_, &width, &height);
     SetSize(width, height);
     FillFrame();
   }
@@ -225,6 +241,7 @@ class ResizeTest
 TEST_P(ResizeTest, TestExternalResizeWorks) {
   ResizingVideoSource video;
   video.flag_codec_ = 0;
+  video.change_start_resln_ = false;
   cfg_.g_lag_in_frames = 0;
   // We use max(kInitialWidth, kInitialHeight) because during the test
   // the width and height of the frame are swapped
@@ -240,8 +257,8 @@ TEST_P(ResizeTest, TestExternalResizeWorks) {
     const unsigned int frame = static_cast<unsigned>(info->pts);
     unsigned int expected_w;
     unsigned int expected_h;
-    ScaleForFrameNumber(frame, kInitialWidth, kInitialHeight, &expected_w,
-                        &expected_h, 0);
+    ScaleForFrameNumber(frame, kInitialWidth, kInitialHeight, video.flag_codec_,
+                        video.change_start_resln_, &expected_w, &expected_h);
     EXPECT_EQ(expected_w, info->w)
         << "Frame " << frame << " had unexpected width";
     EXPECT_EQ(expected_h, info->h)
@@ -377,13 +394,15 @@ AV1_INSTANTIATE_TEST_SUITE(ResizeInternalTestLarge,
                            ::testing::Values(::libaom_test::kOnePassGood));
 #endif
 
+// Parameters: test mode, speed, threads
 class ResizeRealtimeTest
-    : public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int>,
+    : public ::libaom_test::CodecTestWith3Params<libaom_test::TestMode, int,
+                                                 int>,
       public ::libaom_test::EncoderTest {
  protected:
   ResizeRealtimeTest()
-      : EncoderTest(GET_PARAM(0)), set_scale_mode_(false),
-        set_scale_mode2_(false) {}
+      : EncoderTest(GET_PARAM(0)), num_threads_(GET_PARAM(3)),
+        set_scale_mode_(false), set_scale_mode2_(false) {}
   virtual ~ResizeRealtimeTest() {}
 
   virtual void PreEncodeFrameHook(libaom_test::VideoSource *video,
@@ -457,6 +476,7 @@ class ResizeRealtimeTest
     cfg_.rc_dropframe_thresh = 1;
     // Disable error_resilience mode.
     cfg_.g_error_resilient = 0;
+    cfg_.g_threads = num_threads_;
     // Run at low bitrate.
     cfg_.rc_target_bitrate = 200;
     // We use max(kInitialWidth, kInitialHeight) because during the test
@@ -472,6 +492,7 @@ class ResizeRealtimeTest
 
   std::vector<FrameInfo> frame_info_list_;
   int set_cpu_used_;
+  int num_threads_;
   bool change_bitrate_;
   unsigned int frame_change_bitrate_;
   double mismatch_psnr_;
@@ -592,23 +613,30 @@ TEST_P(ResizeRealtimeTest, TestExternalResizeWorks) {
   mismatch_psnr_ = 0.0;
   mismatch_nframes_ = 0;
   DefaultConfig();
-  ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+  // Test external resizing with start resolution equal to
+  // 1. kInitialWidth and kInitialHeight
+  // 2. down-scaled kInitialWidth and kInitialHeight
+  for (int i = 0; i < 2; i++) {
+    video.change_start_resln_ = static_cast<bool>(i);
 
-  // Check we decoded the same number of frames as we attempted to encode
-  ASSERT_EQ(frame_info_list_.size(), video.limit());
+    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
 
-  for (std::vector<FrameInfo>::const_iterator info = frame_info_list_.begin();
-       info != frame_info_list_.end(); ++info) {
-    const unsigned int frame = static_cast<unsigned>(info->pts);
-    unsigned int expected_w;
-    unsigned int expected_h;
-    ScaleForFrameNumber(frame, kInitialWidth, kInitialHeight, &expected_w,
-                        &expected_h, 1);
-    EXPECT_EQ(expected_w, info->w)
-        << "Frame " << frame << " had unexpected width";
-    EXPECT_EQ(expected_h, info->h)
-        << "Frame " << frame << " had unexpected height";
-    EXPECT_EQ(static_cast<unsigned int>(0), GetMismatchFrames());
+    // Check we decoded the same number of frames as we attempted to encode
+    ASSERT_EQ(frame_info_list_.size(), video.limit());
+    for (const auto &info : frame_info_list_) {
+      const unsigned int frame = static_cast<unsigned>(info.pts);
+      unsigned int expected_w;
+      unsigned int expected_h;
+      ScaleForFrameNumber(frame, kInitialWidth, kInitialHeight,
+                          video.flag_codec_, video.change_start_resln_,
+                          &expected_w, &expected_h);
+      EXPECT_EQ(expected_w, info.w)
+          << "Frame " << frame << " had unexpected width";
+      EXPECT_EQ(expected_h, info.h)
+          << "Frame " << frame << " had unexpected height";
+      EXPECT_EQ(static_cast<unsigned int>(0), GetMismatchFrames());
+    }
+    frame_info_list_.clear();
   }
 }
 
@@ -784,7 +812,8 @@ class ResizingCspVideoSource : public ::libaom_test::DummyVideoSource {
   virtual ~ResizingCspVideoSource() {}
 };
 
-#if (defined(DISABLE_TRELLISQ_SEARCH) && DISABLE_TRELLISQ_SEARCH)
+#if (defined(DISABLE_TRELLISQ_SEARCH) && DISABLE_TRELLISQ_SEARCH) || \
+    (defined(CONFIG_MAX_DECODE_PROFILE) && CONFIG_MAX_DECODE_PROFILE < 1)
 TEST_P(ResizeCspTest, DISABLED_TestResizeCspWorks) {
 #else
 TEST_P(ResizeCspTest, TestResizeCspWorks) {
@@ -864,7 +893,7 @@ AV1_INSTANTIATE_TEST_SUITE(ResizeTest,
                            ::testing::Values(::libaom_test::kRealTime));
 AV1_INSTANTIATE_TEST_SUITE(ResizeRealtimeTest,
                            ::testing::Values(::libaom_test::kRealTime),
-                           ::testing::Range(6, 10));
+                           ::testing::Range(6, 10), ::testing::Values(1, 2, 4));
 AV1_INSTANTIATE_TEST_SUITE(ResizeCspTest,
                            ::testing::Values(::libaom_test::kRealTime));
 
@@ -977,5 +1006,84 @@ TEST(ResizeSimpleTest, SmallerFrameSizeSVC) {
   EXPECT_EQ(AOM_CODEC_OK, aom_codec_encode(&enc, nullptr, 0, 0, 0));
   EXPECT_EQ(AOM_CODEC_OK, aom_codec_destroy(&enc));
 }
+
+const int kUsages[] =
+#if CONFIG_REALTIME_ONLY
+    { AOM_USAGE_REALTIME };
+#else
+    { AOM_USAGE_GOOD_QUALITY, AOM_USAGE_REALTIME, AOM_USAGE_ALL_INTRA };
+#endif
+
+const int kNumThreads[] = { 2, 4, 8 };
+
+class FrameSizeChangeTest
+    : public ::libaom_test::CodecTestWith3Params<int, int, int> {
+ protected:
+  FrameSizeChangeTest() {}
+  ~FrameSizeChangeTest() override = default;
+
+  void DoTest(int change_thread) {
+    usage_ = GET_PARAM(1);
+    cpu_used_ = GET_PARAM(2);
+    threads_ = GET_PARAM(3);
+    constexpr int kWidth = 512;
+    constexpr int kHeight = 512;
+    constexpr int kFirstWidth = 256;
+    constexpr int kFirstHeight = 256;
+    // Buffer of zero samples.
+    constexpr size_t kBufferSize = 3 * kWidth * kHeight;
+    std::vector<unsigned char> buffer(kBufferSize,
+                                      static_cast<unsigned char>(0));
+
+    aom_image_t img1;
+    EXPECT_EQ(&img1, aom_img_wrap(&img1, AOM_IMG_FMT_I420, kFirstWidth,
+                                  kFirstHeight, 1, buffer.data()));
+
+    aom_image_t img2;
+    EXPECT_EQ(&img2, aom_img_wrap(&img2, AOM_IMG_FMT_I420, kWidth, kHeight, 1,
+                                  buffer.data()));
+
+    aom_codec_iface_t *iface = aom_codec_av1_cx();
+    aom_codec_enc_cfg_t cfg;
+    EXPECT_EQ(AOM_CODEC_OK, aom_codec_enc_config_default(iface, &cfg, usage_));
+    cfg.g_threads = threads_;
+    cfg.g_lag_in_frames = usage_ == AOM_USAGE_ALL_INTRA ? 0 : 1;
+    cfg.g_w = kFirstWidth;
+    cfg.g_h = kFirstHeight;
+    cfg.g_forced_max_frame_width = kWidth;
+    cfg.g_forced_max_frame_height = kHeight;
+    aom_codec_ctx_t enc;
+    EXPECT_EQ(AOM_CODEC_OK, aom_codec_enc_init(&enc, iface, &cfg, 0));
+    EXPECT_EQ(AOM_CODEC_OK,
+              aom_codec_control(&enc, AOME_SET_CPUUSED, cpu_used_));
+
+    EXPECT_EQ(AOM_CODEC_OK, aom_codec_encode(&enc, &img1, 0, 1, 0));
+
+    if (change_thread == 1) {
+      cfg.g_threads = AOMMAX(1, threads_ / 2);
+    } else if (change_thread == 2) {
+      cfg.g_threads = threads_ * 2;
+    }
+    cfg.g_w = kWidth;
+    cfg.g_h = kHeight;
+    EXPECT_EQ(AOM_CODEC_OK, aom_codec_enc_config_set(&enc, &cfg));
+    EXPECT_EQ(AOM_CODEC_OK, aom_codec_encode(&enc, &img2, 1, 1, 0));
+
+    EXPECT_EQ(AOM_CODEC_OK, aom_codec_encode(&enc, nullptr, 0, 0, 0));
+    EXPECT_EQ(AOM_CODEC_OK, aom_codec_destroy(&enc));
+  }
+
+  int cpu_used_;
+  int threads_;
+  int usage_;
+};
+
+TEST_P(FrameSizeChangeTest, FixedThreads) { DoTest(0); }
+TEST_P(FrameSizeChangeTest, DecreasingThreads) { DoTest(1); }
+TEST_P(FrameSizeChangeTest, IncreasingThreads) { DoTest(2); }
+
+AV1_INSTANTIATE_TEST_SUITE(FrameSizeChangeTest, ::testing::ValuesIn(kUsages),
+                           ::testing::Range(6, 7),
+                           ::testing::ValuesIn(kNumThreads));
 
 }  // namespace
