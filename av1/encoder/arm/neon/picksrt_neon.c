@@ -96,10 +96,10 @@ int64_t av1_lowbd_pixel_proj_error_neon(
 
         int32x4_t v0 = vmulq_n_s32(flt_16b_lo, xq_active);
         v0 = vmlsq_n_s32(v0, vreinterpretq_s32_u16(d0w.val[0]),
-                         xq_active << SGRPROJ_RST_BITS);
+                         xq_active * (1 << SGRPROJ_RST_BITS));
         int32x4_t v1 = vmulq_n_s32(flt_16b_hi, xq_active);
         v1 = vmlsq_n_s32(v1, vreinterpretq_s32_u16(d0w.val[1]),
-                         xq_active << SGRPROJ_RST_BITS);
+                         xq_active * (1 << SGRPROJ_RST_BITS));
         const int16x4_t vr0 = vqrshrn_n_s32(v0, 11);
         const int16x4_t vr1 = vqrshrn_n_s32(v1, 11);
         const int16x8_t e0 =
@@ -141,10 +141,10 @@ int64_t av1_lowbd_pixel_proj_error_neon(
     }
     sum64 = vpaddlq_u32(err0);
   }
-#if defined(__aarch64__)
+#if AOM_ARCH_AARCH64
   err += vaddvq_u64(sum64);
 #else
   err += vget_lane_u64(vadd_u64(vget_low_u64(sum64), vget_high_u64(sum64)), 0);
-#endif  // __aarch64__
+#endif  // AOM_ARCH_AARCH64
   return err;
 }
