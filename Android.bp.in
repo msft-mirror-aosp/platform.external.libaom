@@ -64,7 +64,7 @@ cc_library_static {
                 aom_dsp_common_sources +
                 aom_dsp_decoder_sources +
                 aom_mem_sources +
-                ["aom_ports/arm_cpudetect.c"] +
+                ["aom_ports/aarch64_cpudetect.c"] +
                 aom_rtcd_sources +
                 aom_scale_sources +
                 aom_sources +
@@ -90,7 +90,7 @@ cc_library_static {
                     aom_dsp_decoder_sources +
                     aom_mem_sources +
                     aom_rtcd_sources +
-                    ["aom_ports/arm_cpudetect.c"] +
+                    ["aom_ports/aarch32_cpudetect.c"] +
                     aom_scale_sources +
                     aom_sources +
                     aom_util_sources +
