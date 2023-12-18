@@ -10,6 +10,7 @@
  */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "config/aom_config.h"
@@ -1274,9 +1275,13 @@ static AOM_INLINE void decode_partition(AV1Decoder *const pbi,
     const int num_planes = av1_num_planes(cm);
     for (int plane = 0; plane < num_planes; ++plane) {
       int rcol0, rcol1, rrow0, rrow1;
+
+      // Skip some unnecessary work if loop restoration is disabled
+      if (cm->rst_info[plane].frame_restoration_type == RESTORE_NONE) continue;
+
       if (av1_loop_restoration_corners_in_sb(cm, plane, mi_row, mi_col, bsize,
                                              &rcol0, &rcol1, &rrow0, &rrow1)) {
-        const int rstride = cm->rst_info[plane].horz_units_per_tile;
+        const int rstride = cm->rst_info[plane].horz_units;
         for (int rrow = rrow0; rrow < rrow1; ++rrow) {
           for (int rcol = rcol0; rcol < rcol1; ++rcol) {
             const int runit_idx = rcol + rrow * rstride;
@@ -4325,10 +4330,8 @@ static int read_global_motion_params(WarpedMotionParams *params,
                        trans_dec_factor;
   }
 
-  if (params->wmtype <= AFFINE) {
-    int good_shear_params = av1_get_shear_params(params);
-    if (!good_shear_params) return 0;
-  }
+  int good_shear_params = av1_get_shear_params(params);
+  if (!good_shear_params) return 0;
 
   return 1;
 }
@@ -4434,7 +4437,7 @@ static INLINE void reset_frame_buffers(AV1_COMMON *cm) {
   lock_buffer_pool(cm->buffer_pool);
   reset_ref_frame_map(cm);
   assert(cm->cur_frame->ref_count == 1);
-  for (i = 0; i < FRAME_BUFFERS; ++i) {
+  for (i = 0; i < cm->buffer_pool->num_frame_bufs; ++i) {
     // Reset all unreferenced frame buffers. We can also reset cm->cur_frame
     // because we are the sole owner of cm->cur_frame.
     if (frame_bufs[i].ref_count > 0 && &frame_bufs[i] != cm->cur_frame) {
@@ -5128,7 +5131,7 @@ static AOM_INLINE void superres_post_decode(AV1Decoder *pbi) {
   if (!av1_superres_scaled(cm)) return;
   assert(!cm->features.all_lossless);
 
-  av1_superres_upscale(cm, pool);
+  av1_superres_upscale(cm, pool, 0);
 }
 
 uint32_t av1_decode_frame_headers_and_setup(AV1Decoder *pbi,
@@ -5218,7 +5221,10 @@ static AOM_INLINE void setup_frame_info(AV1Decoder *pbi) {
   if (cm->rst_info[0].frame_restoration_type != RESTORE_NONE ||
       cm->rst_info[1].frame_restoration_type != RESTORE_NONE ||
       cm->rst_info[2].frame_restoration_type != RESTORE_NONE) {
-    av1_alloc_restoration_buffers(cm);
+    av1_alloc_restoration_buffers(cm, /*is_sgr_enabled =*/true);
+    for (int p = 0; p < av1_num_planes(cm); p++) {
+      av1_alloc_restoration_struct(cm, &cm->rst_info[p], p > 0);
+    }
   }
 
   const int use_highbd = cm->seq_params->use_highbitdepth;
@@ -5238,6 +5244,7 @@ void av1_decode_tg_tiles_and_wrapup(AV1Decoder *pbi, const uint8_t *data,
   MACROBLOCKD *const xd = &pbi->dcb.xd;
   const int tile_count_tg = end_tile - start_tile + 1;
 
+  xd->error_info = cm->error;
   if (initialize_flag) setup_frame_info(pbi);
   const int num_planes = av1_num_planes(cm);
 
