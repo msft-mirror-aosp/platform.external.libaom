@@ -63,9 +63,9 @@ typedef tuple<HbdHtFunc, IHbdHtFunc, IHbdHtFunc, int, TX_TYPE, int> IHbdHtParam;
 
 class AV1HighbdInvHTNxN : public ::testing::TestWithParam<IHbdHtParam> {
  public:
-  virtual ~AV1HighbdInvHTNxN() {}
+  ~AV1HighbdInvHTNxN() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     txfm_ref_ = GET_PARAM(0);
     inv_txfm_ = GET_PARAM(1);
     inv_txfm_ref_ = GET_PARAM(2);
@@ -92,7 +92,7 @@ class AV1HighbdInvHTNxN : public ::testing::TestWithParam<IHbdHtParam> {
     ASSERT_NE(output_ref_, nullptr);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     aom_free(input_);
     aom_free(coeffs_);
     aom_free(output_);
@@ -200,7 +200,7 @@ typedef std::tuple<const HighbdInvTxfm2dFunc> AV1HighbdInvTxfm2dParam;
 class AV1HighbdInvTxfm2d
     : public ::testing::TestWithParam<AV1HighbdInvTxfm2dParam> {
  public:
-  virtual void SetUp() { target_func_ = GET_PARAM(0); }
+  void SetUp() override { target_func_ = GET_PARAM(0); }
   void RunAV1InvTxfm2dTest(TX_TYPE tx_type, TX_SIZE tx_size, int run_times,
                            int bit_depth, int gt_int16 = 0);
 
@@ -298,9 +298,8 @@ void AV1HighbdInvTxfm2d::RunAV1InvTxfm2dTest(TX_TYPE tx_type_, TX_SIZE tx_size_,
       for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
           ASSERT_EQ(ref_output[r * stride + c], output[r * stride + c])
-              << "[" << r << "," << c << "] " << cnt
-              << " tx_size: " << static_cast<int>(tx_size_)
-              << " bit_depth_: " << bit_depth_
+              << "[" << r << "," << c << "] " << cnt << " tx_size: " << cols
+              << "x" << rows << " bit_depth_: " << bit_depth_
               << " tx_type: " << tx_type_name[tx_type_] << " eob " << eob;
         }
       }

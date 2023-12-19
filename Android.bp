@@ -29,9 +29,17 @@ aom_av1_common_intrin_neon = [
     "av1/common/arm/blend_a64_vmask_neon.c",
     "av1/common/arm/cdef_block_neon.c",
     "av1/common/arm/cfl_neon.c",
+    "av1/common/arm/compound_convolve_neon.c",
     "av1/common/arm/convolve_neon.c",
+    "av1/common/arm/highbd_compound_convolve_neon.c",
+    "av1/common/arm/highbd_convolve_horiz_rs_neon.c",
+    "av1/common/arm/highbd_convolve_neon.c",
+    "av1/common/arm/highbd_convolve_scale_neon.c",
     "av1/common/arm/highbd_inv_txfm_neon.c",
-    "av1/common/arm/jnt_convolve_neon.c",
+    "av1/common/arm/highbd_reconinter_neon.c",
+    "av1/common/arm/highbd_reconintra_neon.c",
+    "av1/common/arm/highbd_warp_plane_neon.c",
+    "av1/common/arm/highbd_wiener_convolve_neon.c",
     "av1/common/arm/reconinter_neon.c",
     "av1/common/arm/reconintra_neon.c",
     "av1/common/arm/resize_neon.c",
@@ -40,13 +48,23 @@ aom_av1_common_intrin_neon = [
     "av1/common/arm/wiener_convolve_neon.c",
 ]
 
+aom_av1_common_intrin_neon_dotprod = [
+    "av1/common/arm/compound_convolve_neon_dotprod.c",
+    "av1/common/arm/convolve_neon_dotprod.c",
+]
+
+aom_av1_common_intrin_neon_i8mm = [
+    "av1/common/arm/compound_convolve_neon_i8mm.c",
+    "av1/common/arm/convolve_neon_i8mm.c",
+    "av1/common/arm/warp_plane_neon_i8mm.c",
+]
+
 aom_av1_common_intrin_sse2 = [
     "av1/common/x86/cdef_block_sse2.c",
     "av1/common/x86/cfl_sse2.c",
     "av1/common/x86/convolve_2d_sse2.c",
     "av1/common/x86/convolve_sse2.c",
     "av1/common/x86/jnt_convolve_sse2.c",
-    "av1/common/x86/warp_plane_sse2.c",
     "av1/common/x86/wiener_convolve_sse2.c",
 ]
 
@@ -75,6 +93,10 @@ aom_av1_common_intrin_ssse3 = [
     "av1/common/x86/jnt_convolve_ssse3.c",
     "av1/common/x86/reconinter_ssse3.c",
     "av1/common/x86/resize_ssse3.c",
+]
+
+aom_av1_common_intrin_sve = [
+    "av1/common/arm/warp_plane_sve.c",
 ]
 
 aom_av1_common_intrin_vsx = [
@@ -140,7 +162,7 @@ aom_av1_encoder_asm_ssse3_x86_64 = [
 ]
 
 aom_av1_encoder_intrin_arm_crc32 = [
-    "av1/encoder/arm/crc32/hash_crc32.c",
+    "av1/encoder/arm/crc32/hash_arm_crc32.c",
 ]
 
 aom_av1_encoder_intrin_avx2 = [
@@ -154,6 +176,7 @@ aom_av1_encoder_intrin_avx2 = [
     "av1/encoder/x86/highbd_block_error_intrin_avx2.c",
     "av1/encoder/x86/highbd_fwd_txfm_avx2.c",
     "av1/encoder/x86/highbd_temporal_filter_avx2.c",
+    "av1/encoder/x86/ml_avx2.c",
     "av1/encoder/x86/pickrst_avx2.c",
     "av1/encoder/x86/rdopt_avx2.c",
     "av1/encoder/x86/temporal_filter_avx2.c",
@@ -164,15 +187,24 @@ aom_av1_encoder_intrin_neon = [
     "av1/encoder/arm/neon/av1_error_neon.c",
     "av1/encoder/arm/neon/av1_fwd_txfm2d_neon.c",
     "av1/encoder/arm/neon/av1_highbd_quantize_neon.c",
+    "av1/encoder/arm/neon/av1_k_means_neon.c",
     "av1/encoder/arm/neon/encodetxb_neon.c",
     "av1/encoder/arm/neon/highbd_fwd_txfm_neon.c",
+    "av1/encoder/arm/neon/highbd_pickrst_neon.c",
+    "av1/encoder/arm/neon/highbd_rdopt_neon.c",
+    "av1/encoder/arm/neon/highbd_temporal_filter_neon.c",
     "av1/encoder/arm/neon/hybrid_fwd_txfm_neon.c",
     "av1/encoder/arm/neon/ml_neon.c",
-    "av1/encoder/arm/neon/picksrt_neon.c",
+    "av1/encoder/arm/neon/pickrst_neon.c",
     "av1/encoder/arm/neon/quantize_neon.c",
     "av1/encoder/arm/neon/rdopt_neon.c",
+    "av1/encoder/arm/neon/reconinter_enc_neon.c",
     "av1/encoder/arm/neon/temporal_filter_neon.c",
     "av1/encoder/arm/neon/wedge_utils_neon.c",
+]
+
+aom_av1_encoder_intrin_neon_dotprod = [
+    "av1/encoder/arm/neon/temporal_filter_neon_dotprod.c",
 ]
 
 aom_av1_encoder_intrin_sse2 = [
@@ -252,6 +284,7 @@ aom_av1_encoder_sources = [
     "av1/encoder/ml.c",
     "av1/encoder/motion_search_facade.c",
     "av1/encoder/mv_prec.c",
+    "av1/encoder/nonrd_opt.c",
     "av1/encoder/nonrd_pickmode.c",
     "av1/encoder/palette.c",
     "av1/encoder/partition_search.c",
@@ -282,11 +315,25 @@ aom_av1_encoder_sources = [
     "third_party/vector/vector.c",
 ]
 
-aom_av1_rc_qmode_sources = [
-    "av1/qmode_rc/ducky_encode.cc",
-    "av1/qmode_rc/ratectrl_qmode.cc",
-    "av1/qmode_rc/ratectrl_qmode_interface.cc",
-    "av1/qmode_rc/reference_manager.cc",
+aom_av1_rc_sources = [
+    "av1/ratectrl_rtc.cc",
+]
+
+aom_common_app_util_sources = [
+    "av1/arg_defs.c",
+    "common/args.c",
+    "common/args_helper.c",
+    "common/av1_config.c",
+    "common/ivfdec.c",
+    "common/md5_utils.c",
+    "common/rawenc.c",
+    "common/tools_common.c",
+    "common/y4menc.c",
+]
+
+aom_decoder_app_util_sources = [
+    "common/obudec.c",
+    "common/video_reader.c",
 ]
 
 aom_dsp_common_asm_sse2 = [
@@ -316,14 +363,28 @@ aom_dsp_common_intrin_avx2 = [
 ]
 
 aom_dsp_common_intrin_neon = [
+    "aom_dsp/arm/aom_convolve8_neon.c",
     "aom_dsp/arm/aom_convolve_copy_neon.c",
+    "aom_dsp/arm/avg_pred_neon.c",
     "aom_dsp/arm/blend_a64_mask_neon.c",
     "aom_dsp/arm/fwd_txfm_neon.c",
+    "aom_dsp/arm/highbd_blend_a64_hmask_neon.c",
+    "aom_dsp/arm/highbd_blend_a64_mask_neon.c",
+    "aom_dsp/arm/highbd_blend_a64_vmask_neon.c",
+    "aom_dsp/arm/highbd_convolve8_neon.c",
     "aom_dsp/arm/highbd_intrapred_neon.c",
     "aom_dsp/arm/highbd_loopfilter_neon.c",
     "aom_dsp/arm/intrapred_neon.c",
     "aom_dsp/arm/loopfilter_neon.c",
     "aom_dsp/arm/subtract_neon.c",
+]
+
+aom_dsp_common_intrin_neon_dotprod = [
+    "aom_dsp/arm/aom_convolve8_neon_dotprod.c",
+]
+
+aom_dsp_common_intrin_neon_i8mm = [
+    "aom_dsp/arm/aom_convolve8_neon_i8mm.c",
 ]
 
 aom_dsp_common_intrin_sse2 = [
@@ -421,15 +482,40 @@ aom_dsp_encoder_intrin_avx2 = [
 
 aom_dsp_encoder_intrin_neon = [
     "aom_dsp/arm/avg_neon.c",
+    "aom_dsp/arm/blk_sse_sum_neon.c",
     "aom_dsp/arm/hadamard_neon.c",
+    "aom_dsp/arm/highbd_avg_neon.c",
+    "aom_dsp/arm/highbd_avg_pred_neon.c",
+    "aom_dsp/arm/highbd_hadamard_neon.c",
+    "aom_dsp/arm/highbd_masked_sad_neon.c",
+    "aom_dsp/arm/highbd_obmc_sad_neon.c",
+    "aom_dsp/arm/highbd_obmc_variance_neon.c",
     "aom_dsp/arm/highbd_quantize_neon.c",
+    "aom_dsp/arm/highbd_sad_neon.c",
+    "aom_dsp/arm/highbd_sadxd_neon.c",
+    "aom_dsp/arm/highbd_sse_neon.c",
+    "aom_dsp/arm/highbd_subpel_variance_neon.c",
     "aom_dsp/arm/highbd_variance_neon.c",
-    "aom_dsp/arm/sad4d_neon.c",
+    "aom_dsp/arm/masked_sad4d_neon.c",
+    "aom_dsp/arm/masked_sad_neon.c",
+    "aom_dsp/arm/obmc_sad_neon.c",
+    "aom_dsp/arm/obmc_variance_neon.c",
     "aom_dsp/arm/sad_neon.c",
+    "aom_dsp/arm/sadxd_neon.c",
     "aom_dsp/arm/sse_neon.c",
     "aom_dsp/arm/subpel_variance_neon.c",
     "aom_dsp/arm/sum_squares_neon.c",
     "aom_dsp/arm/variance_neon.c",
+    "aom_dsp/flow_estimation/arm/disflow_neon.c",
+]
+
+aom_dsp_encoder_intrin_neon_dotprod = [
+    "aom_dsp/arm/highbd_variance_neon_dotprod.c",
+    "aom_dsp/arm/sad_neon_dotprod.c",
+    "aom_dsp/arm/sadxd_neon_dotprod.c",
+    "aom_dsp/arm/sse_neon_dotprod.c",
+    "aom_dsp/arm/sum_squares_neon_dotprod.c",
+    "aom_dsp/arm/variance_neon_dotprod.c",
 ]
 
 aom_dsp_encoder_intrin_sse2 = [
@@ -441,6 +527,7 @@ aom_dsp_encoder_intrin_sse2 = [
     "aom_dsp/x86/highbd_quantize_intrin_sse2.c",
     "aom_dsp/x86/highbd_subtract_sse2.c",
     "aom_dsp/x86/highbd_variance_sse2.c",
+    "aom_dsp/x86/jnt_sad_sse2.c",
     "aom_dsp/x86/quantize_sse2.c",
     "aom_dsp/x86/sum_squares_sse2.c",
     "aom_dsp/x86/variance_sse2.c",
@@ -448,6 +535,7 @@ aom_dsp_encoder_intrin_sse2 = [
 
 aom_dsp_encoder_intrin_sse4_1 = [
     "aom_dsp/flow_estimation/x86/corner_match_sse4.c",
+    "aom_dsp/flow_estimation/x86/disflow_sse4.c",
     "aom_dsp/x86/avg_intrin_sse4.c",
     "aom_dsp/x86/highbd_variance_sse4.c",
     "aom_dsp/x86/obmc_sad_sse4.c",
@@ -456,7 +544,6 @@ aom_dsp_encoder_intrin_sse4_1 = [
 ]
 
 aom_dsp_encoder_intrin_ssse3 = [
-    "aom_dsp/x86/jnt_sad_ssse3.c",
     "aom_dsp/x86/jnt_variance_ssse3.c",
     "aom_dsp/x86/masked_sad4d_ssse3.c",
     "aom_dsp/x86/masked_sad_intrin_ssse3.c",
@@ -481,6 +568,7 @@ aom_dsp_encoder_sources = [
     "aom_dsp/noise_model.c",
     "aom_dsp/noise_util.c",
     "aom_dsp/psnr.c",
+    "aom_dsp/pyramid.c",
     "aom_dsp/quantize.c",
     "aom_dsp/sad.c",
     "aom_dsp/sad_av1.c",
@@ -490,9 +578,26 @@ aom_dsp_encoder_sources = [
     "aom_dsp/variance.c",
 ]
 
+aom_encoder_app_util_sources = [
+    "common/ivfenc.c",
+    "common/video_writer.c",
+    "common/warnings.c",
+    "common/y4minput.c",
+    "examples/encoder_util.c",
+]
+
 aom_encoder_stats_sources = [
     "stats/aomstats.c",
     "stats/rate_hist.c",
+]
+
+aom_libwebm_sources = [
+    "third_party/libwebm/common/hdr_util.cc",
+    "third_party/libwebm/mkvmuxer/mkvmuxer.cc",
+    "third_party/libwebm/mkvmuxer/mkvmuxerutil.cc",
+    "third_party/libwebm/mkvmuxer/mkvwriter.cc",
+    "third_party/libwebm/mkvparser/mkvparser.cc",
+    "third_party/libwebm/mkvparser/mkvreader.cc",
 ]
 
 aom_mem_sources = [
@@ -501,14 +606,6 @@ aom_mem_sources = [
 
 aom_ports_asm_x86 = [
     "aom_ports/float.asm",
-]
-
-aom_rc_interface_sources = [
-    "common/y4minput.c",
-    "test/decode_test_driver.cc",
-    "test/encode_test_driver.cc",
-    "test/ratectrl_rtc_test.cc",
-    "test/test_aom_rc_interface.cc",
 ]
 
 aom_rtcd_sources = [
@@ -534,7 +631,6 @@ aom_sources = [
 
 aom_util_sources = [
     "aom_util/aom_thread.c",
-    "aom_util/debug_util.c",
 ]
 
 aom_webm_decoder_sources = [
@@ -545,13 +641,6 @@ aom_webm_encoder_sources = [
     "common/webmenc.cc",
 ]
 
-av1_rc_qmode_sources = [
-    "common/tools_common.c",
-    "common/y4minput.c",
-    "test/ducky_encode_test.cc",
-    "test/ratectrl_qmode_test.cc",
-]
-
 aom_rtcd_sources_gen = [
 ]
 
@@ -560,10 +649,6 @@ aom_sources_gen = [
 ]
 
 aom_version_sources_gen = [
-]
-
-av1_rc_qmode_sources_gen = [
-    "gen_src/usage_exit.c",
 ]
 
 aom_av1_common_sources += ["common/av1_config.c"]
@@ -631,7 +716,7 @@ cc_library_static {
                 aom_dsp_common_sources +
                 aom_dsp_decoder_sources +
                 aom_mem_sources +
-                ["aom_ports/arm_cpudetect.c"] +
+                ["aom_ports/aarch64_cpudetect.c"] +
                 aom_rtcd_sources +
                 aom_scale_sources +
                 aom_sources +
@@ -657,7 +742,7 @@ cc_library_static {
                     aom_dsp_decoder_sources +
                     aom_mem_sources +
                     aom_rtcd_sources +
-                    ["aom_ports/arm_cpudetect.c"] +
+                    ["aom_ports/aarch32_cpudetect.c"] +
                     aom_scale_sources +
                     aom_sources +
                     aom_util_sources +
