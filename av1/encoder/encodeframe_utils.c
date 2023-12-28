@@ -22,7 +22,7 @@ void av1_set_ssim_rdmult(const AV1_COMP *const cpi, int *errorperbit,
                          const int mi_col, int *const rdmult) {
   const AV1_COMMON *const cm = &cpi->common;
 
-  const int bsize_base = BLOCK_16X16;
+  const BLOCK_SIZE bsize_base = BLOCK_16X16;
   const int num_mi_w = mi_size_wide[bsize_base];
   const int num_mi_h = mi_size_high[bsize_base];
   const int num_cols = (cm->mi_params.mi_cols + num_mi_w - 1) / num_mi_w;
@@ -31,8 +31,19 @@ void av1_set_ssim_rdmult(const AV1_COMP *const cpi, int *errorperbit,
   const int num_brows = (mi_size_high[bsize] + num_mi_h - 1) / num_mi_h;
   int row, col;
   double num_of_mi = 0.0;
-  double geom_mean_of_scale = 0.0;
+  double geom_mean_of_scale = 1.0;
 
+  // To avoid overflow of 'geom_mean_of_scale', bsize_base must be at least
+  // BLOCK_8X8.
+  //
+  // For bsize=BLOCK_128X128 and bsize_base=BLOCK_8X8, the loop below would
+  // iterate 256 times. Considering the maximum value of
+  // cpi->ssim_rdmult_scaling_factors (see av1_set_mb_ssim_rdmult_scaling()),
+  // geom_mean_of_scale can go up to 4.8323^256, which is within DBL_MAX
+  // (maximum value a double data type can hold). If bsize_base is modified to
+  // BLOCK_4X4 (minimum possible block size), geom_mean_of_scale can go up
+  // to 4.8323^1024 and exceed DBL_MAX, resulting in data overflow.
+  assert(bsize_base >= BLOCK_8X8);
   assert(cpi->oxcf.tune_cfg.tuning == AOM_TUNE_SSIM);
 
   for (row = mi_row / num_mi_w;
@@ -41,16 +52,35 @@ void av1_set_ssim_rdmult(const AV1_COMP *const cpi, int *errorperbit,
          col < num_cols && col < mi_col / num_mi_h + num_bcols; ++col) {
       const int index = row * num_cols + col;
       assert(cpi->ssim_rdmult_scaling_factors[index] != 0.0);
-      geom_mean_of_scale += log(cpi->ssim_rdmult_scaling_factors[index]);
+      geom_mean_of_scale *= cpi->ssim_rdmult_scaling_factors[index];
       num_of_mi += 1.0;
     }
   }
-  geom_mean_of_scale = exp(geom_mean_of_scale / num_of_mi);
+  geom_mean_of_scale = pow(geom_mean_of_scale, (1.0 / num_of_mi));
 
   *rdmult = (int)((double)(*rdmult) * geom_mean_of_scale + 0.5);
   *rdmult = AOMMAX(*rdmult, 0);
   av1_set_error_per_bit(errorperbit, *rdmult);
 }
+
+#if CONFIG_SALIENCY_MAP
+void av1_set_saliency_map_vmaf_rdmult(const AV1_COMP *const cpi,
+                                      int *errorperbit, const BLOCK_SIZE bsize,
+                                      const int mi_row, const int mi_col,
+                                      int *const rdmult) {
+  const AV1_COMMON *const cm = &cpi->common;
+  const int num_mi_w = mi_size_wide[bsize];
+  const int num_mi_h = mi_size_high[bsize];
+  const int num_cols = (cm->mi_params.mi_cols + num_mi_w - 1) / num_mi_w;
+
+  *rdmult =
+      (int)(*rdmult * cpi->sm_scaling_factor[(mi_row / num_mi_h) * num_cols +
+                                             (mi_col / num_mi_w)]);
+
+  *rdmult = AOMMAX(*rdmult, 0);
+  av1_set_error_per_bit(errorperbit, *rdmult);
+}
+#endif
 
 // TODO(angiebird): Move these function to tpl_model.c
 #if !CONFIG_REALTIME_ONLY
@@ -147,7 +177,7 @@ int av1_get_hier_tpl_rdmult(const AV1_COMP *const cpi, MACROBLOCK *const x,
   const int block_mi_width_sr =
       coded_to_superres_mi(mi_size_wide[bsize], cm->superres_scale_denominator);
 
-  const int bsize_base = BLOCK_16X16;
+  const BLOCK_SIZE bsize_base = BLOCK_16X16;
   const int num_mi_w = mi_size_wide[bsize_base];
   const int num_mi_h = mi_size_high[bsize_base];
   const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
@@ -193,6 +223,9 @@ static AOM_INLINE void update_filter_type_count(FRAME_COUNTS *counts,
   for (dir = 0; dir < 2; ++dir) {
     const int ctx = av1_get_pred_context_switchable_interp(xd, dir);
     InterpFilter filter = av1_extract_interp_filter(mbmi->interp_filters, dir);
+
+    // Only allow the 3 valid SWITCHABLE_FILTERS.
+    assert(filter < SWITCHABLE_FILTERS);
     ++counts->switchable_interp[ctx][filter];
   }
 }
@@ -306,8 +339,7 @@ void av1_update_state(const AV1_COMP *const cpi, ThreadData *td,
   }
 
   // Count zero motion vector.
-  if (!dry_run && cpi->oxcf.q_cfg.aq_mode == CYCLIC_REFRESH_AQ &&
-      !frame_is_intra_only(cm)) {
+  if (!dry_run && !frame_is_intra_only(cm)) {
     const MV mv = mi->mv[0].as_mv;
     if (is_inter_block(mi) && mi->ref_frame[0] == LAST_FRAME &&
         abs(mv.row) < 8 && abs(mv.col) < 8) {
@@ -369,9 +401,12 @@ void av1_update_state(const AV1_COMP *const cpi, ThreadData *td,
   }
 #endif
   if (!frame_is_intra_only(cm)) {
-    if (cm->features.interp_filter == SWITCHABLE &&
-        mi_addr->motion_mode != WARPED_CAUSAL &&
-        !is_nontrans_global_motion(xd, xd->mi[0])) {
+    if (is_inter_block(mi) && cm->features.interp_filter == SWITCHABLE) {
+      // When the frame interp filter is SWITCHABLE, several cases that always
+      // use the default type (EIGHTTAP_REGULAR) are described in
+      // av1_is_interp_needed(). Here, we should keep the counts for all
+      // applicable blocks, so the frame filter resetting decision in
+      // fix_interp_filter() is made correctly.
       update_filter_type_count(td->counts, xd, mi_addr);
     }
   }
@@ -553,13 +588,13 @@ void av1_sum_intra_stats(const AV1_COMMON *const cm, FRAME_COUNTS *counts,
       update_cdf(cdf_v, CFL_IDX_V(idx), CFL_ALPHABET_SIZE);
     }
   }
-  if (av1_is_directional_mode(get_uv_mode(uv_mode)) &&
-      av1_use_angle_delta(bsize)) {
+  const PREDICTION_MODE intra_mode = get_uv_mode(uv_mode);
+  if (av1_is_directional_mode(intra_mode) && av1_use_angle_delta(bsize)) {
 #if CONFIG_ENTROPY_STATS
-    ++counts->angle_delta[uv_mode - UV_V_PRED]
+    ++counts->angle_delta[intra_mode - V_PRED]
                          [mbmi->angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA];
 #endif
-    update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],
+    update_cdf(fc->angle_delta_cdf[intra_mode - V_PRED],
                mbmi->angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
                2 * MAX_ANGLE_DELTA + 1);
   }
@@ -1706,5 +1741,25 @@ void av1_set_cost_upd_freq(AV1_COMP *cpi, ThreadData *td,
       av1_fill_dv_costs(&xd->tile_ctx->ndvc, x->dv_costs);
       break;
     default: assert(0);
+  }
+}
+
+void av1_dealloc_src_diff_buf(struct macroblock *mb, int num_planes) {
+  for (int plane = 0; plane < num_planes; ++plane) {
+    aom_free(mb->plane[plane].src_diff);
+    mb->plane[plane].src_diff = NULL;
+  }
+}
+
+void av1_alloc_src_diff_buf(const struct AV1Common *cm, struct macroblock *mb) {
+  const int num_planes = av1_num_planes(cm);
+  for (int plane = 0; plane < num_planes; ++plane) {
+    const int subsampling_xy =
+        plane ? cm->seq_params->subsampling_x + cm->seq_params->subsampling_y
+              : 0;
+    const int sb_size = MAX_SB_SQUARE >> subsampling_xy;
+    CHECK_MEM_ERROR(cm, mb->plane[plane].src_diff,
+                    (int16_t *)aom_memalign(
+                        32, sizeof(*mb->plane[plane].src_diff) * sb_size));
   }
 }

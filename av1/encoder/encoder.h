@@ -1071,6 +1071,15 @@ typedef struct AV1EncoderConfig {
   // CONFIG_PARTITION_SEARCH_ORDER.
   const char *partition_info_path;
 
+  // The flag that indicates whether we use an external rate distribution to
+  // guide adaptive quantization. It requires --deltaq-mode=3. The rate
+  // distribution map file name is stored in |rate_distribution_info|.
+  unsigned int enable_rate_guide_deltaq;
+
+  // The input file of rate distribution information used in all intra mode
+  // to determine delta quantization.
+  const char *rate_distribution_info;
+
   // Exit the encoder when it fails to encode to a given level.
   int strict_level_conformance;
 
@@ -1433,6 +1442,8 @@ typedef struct RD_COUNTS {
 
 typedef struct ThreadData {
   MACROBLOCK mb;
+  MvCosts *mv_costs_alloc;
+  IntraBCMVCosts *dv_costs_alloc;
   RD_COUNTS rd_counts;
   FRAME_COUNTS *counts;
   PC_TREE_SHARED_BUFFERS shared_coeff_buf;
@@ -1445,6 +1456,7 @@ typedef struct ThreadData {
   CONV_BUF_TYPE *tmp_conv_dst;
   uint64_t abs_sum_level;
   uint8_t *tmp_pred_bufs[2];
+  uint8_t *wiener_tmp_pred_buf;
   int intrabc_used;
   int deltaq_used;
   int coefficient_size;
@@ -1455,7 +1467,9 @@ typedef struct ThreadData {
   int32_t num_64x64_blocks;
   PICK_MODE_CONTEXT *firstpass_ctx;
   TemporalFilterData tf_data;
+  TplBuffers tpl_tmp_buffers;
   TplTxfmStats tpl_txfm_stats;
+  GlobalMotionData gm_data;
   // Pointer to the array of structures to store gradient information of each
   // pixel in a superblock. The buffer constitutes of MAX_SB_SQUARE pixel level
   // structures for each of the plane types (PLANE_TYPE_Y and PLANE_TYPE_UV).
@@ -1465,8 +1479,8 @@ typedef struct ThreadData {
   // store source variance and log of source variance of each 4x4 sub-block
   // for subsequent retrieval.
   Block4x4VarInfo *src_var_info_of_4x4_sub_blocks;
-  // The pc tree root for RTC non-rd case.
-  PC_TREE *rt_pc_root;
+  // Pointer to pc tree root.
+  PC_TREE *pc_root;
 } ThreadData;
 
 struct EncWorkerData;
@@ -1517,6 +1531,19 @@ typedef struct {
    */
   int allocated_sb_rows;
 
+  /*!
+   * Initialized to false, set to true by the worker thread that encounters an
+   * error in order to abort the processing of other worker threads.
+   */
+  bool row_mt_exit;
+
+  /*!
+   * Initialized to false, set to true during first pass encoding by the worker
+   * thread that encounters an error in order to abort the processing of other
+   * worker threads.
+   */
+  bool firstpass_mt_exit;
+
 #if CONFIG_MULTITHREAD
   /*!
    * Mutex lock used while dispatching jobs.
@@ -1542,6 +1569,36 @@ typedef struct {
   void (*sync_write_ptr)(AV1EncRowMultiThreadSync *const, int, int, int);
   /**@}*/
 } AV1EncRowMultiThreadInfo;
+
+/*!
+ * \brief Encoder data related to multi-threading for allintra deltaq-mode=3
+ */
+typedef struct {
+#if CONFIG_MULTITHREAD
+  /*!
+   * Mutex lock used while dispatching jobs.
+   */
+  pthread_mutex_t *mutex_;
+  /*!
+   *  Condition variable used to dispatch loopfilter jobs.
+   */
+  pthread_cond_t *cond_;
+#endif
+
+  /**
+   * \name Row synchronization related function pointers for all intra mode
+   */
+  /**@{*/
+  /*!
+   * Reader.
+   */
+  void (*intra_sync_read_ptr)(AV1EncRowMultiThreadSync *const, int, int);
+  /*!
+   * Writer.
+   */
+  void (*intra_sync_write_ptr)(AV1EncRowMultiThreadSync *const, int, int, int);
+  /**@}*/
+} AV1EncAllIntraMultiThreadInfo;
 
 /*!
  * \brief Max number of recodes used to track the frame probabilities.
@@ -1578,6 +1635,45 @@ typedef struct RestoreStateBuffers {
    */
   RestorationLineBuffers *rlbs;
 } RestoreStateBuffers;
+
+/*!
+ * \brief Parameters related to restoration types.
+ */
+typedef struct {
+  /*!
+   * Stores the best coefficients for Wiener restoration.
+   */
+  WienerInfo wiener;
+
+  /*!
+   * Stores the best coefficients for Sgrproj restoration.
+   */
+  SgrprojInfo sgrproj;
+
+  /*!
+   * The rtype to use for this unit given a frame rtype as index. Indices:
+   * WIENER, SGRPROJ, SWITCHABLE.
+   */
+  RestorationType best_rtype[RESTORE_TYPES - 1];
+} RestUnitSearchInfo;
+
+/*!
+ * \brief Structure to hold search parameter per restoration unit and
+ * intermediate buffer of Wiener filter used in pick filter stage of Loop
+ * restoration.
+ */
+typedef struct {
+  /*!
+   * Array of pointers to 'RestUnitSearchInfo' which holds data related to
+   * restoration types.
+   */
+  RestUnitSearchInfo *rusi[MAX_MB_PLANE];
+
+  /*!
+   * Buffer used to hold dgd-avg data during SIMD call of Wiener filter.
+   */
+  int16_t *dgd_avg;
+} AV1LrPickStruct;
 
 /*!
  * \brief Primary Encoder parameters related to multi-threading.
@@ -1619,6 +1715,11 @@ typedef struct PrimaryMultiThreadInfo {
    * Number of primary workers created for multi-threading.
    */
   int p_num_workers;
+
+  /*!
+   * Tracks the number of workers in encode stage multi-threading.
+   */
+  int prev_num_enc_workers;
 } PrimaryMultiThreadInfo;
 
 /*!
@@ -1661,6 +1762,12 @@ typedef struct MultiThreadInfo {
    * Encoder row multi-threading data.
    */
   AV1EncRowMultiThreadInfo enc_row_mt;
+
+  /*!
+   * Encoder multi-threading data for allintra mode in the preprocessing stage
+   * when --deltaq-mode=3.
+   */
+  AV1EncAllIntraMultiThreadInfo intra_mt;
 
   /*!
    * Tpl row multi-threading data.
@@ -1950,11 +2057,6 @@ typedef struct {
   YV12_BUFFER_CONFIG *ref_buf[REF_FRAMES];
 
   /*!
-   * Pointer to the source frame buffer.
-   */
-  unsigned char *src_buffer;
-
-  /*!
    * Holds the number of valid reference frames in past and future directions
    * w.r.t. the current frame. num_ref_frames[i] stores the total number of
    * valid reference frames in 'i' direction.
@@ -1976,18 +2078,6 @@ typedef struct {
   int segment_map_w; /*!< segment map width */
   int segment_map_h; /*!< segment map height */
   /**@}*/
-
-  /*!
-   * Holds the total number of corner points detected in the source frame.
-   */
-  int num_src_corners;
-
-  /*!
-   * Holds the x and y co-ordinates of the corner points detected in the source
-   * frame. src_corners[i] holds the x co-ordinate and src_corners[i+1] holds
-   * the y co-ordinate of the ith corner point detected.
-   */
-  int src_corners[2 * MAX_CORNERS];
 } GlobalMotionInfo;
 
 /*!
@@ -2405,6 +2495,23 @@ typedef struct RTC_REF {
   int non_reference_frame;
   int ref_frame_comp[3];
   int gld_idx_1layer;
+  /*!
+   * Frame number of the last frame that refreshed the buffer slot.
+   */
+  unsigned int buffer_time_index[REF_FRAMES];
+  /*!
+   * Spatial layer id of the last frame that refreshed the buffer slot.
+   */
+  unsigned char buffer_spatial_layer[REF_FRAMES];
+  /*!
+   * Flag to indicate whether closest reference was the previous frame.
+   */
+  bool reference_was_previous_frame;
+  /*!
+   * Flag to indicate this frame is based on longer term reference only,
+   * for recovery from past loss, and it should be biased for improved coding.
+   */
+  bool bias_recovery_frame;
 } RTC_REF;
 /*!\endcond */
 
@@ -2751,6 +2858,12 @@ typedef struct AV1_PRIMARY {
    * Struct for the reference structure for RTC.
    */
   RTC_REF rtc_ref;
+
+  /*!
+   * Struct for all intra mode row multi threading in the preprocess stage
+   * when --deltaq-mode=3.
+   */
+  AV1EncRowMultiThreadSync intra_row_mt_sync;
 } AV1_PRIMARY;
 
 /*!
@@ -2880,6 +2993,11 @@ typedef struct AV1_COMP {
    * Temporal filter context.
    */
   TemporalFilterCtx tf_ctx;
+
+  /*!
+   * Pointer to CDEF search context.
+   */
+  CdefSearchCtx *cdef_search_ctx;
 
   /*!
    * Variables related to forcing integer mv decisions for the current frame.
@@ -3164,6 +3282,11 @@ typedef struct AV1_COMP {
   AV1LrStruct lr_ctxt;
 
   /*!
+   * Loop Restoration context used during pick stage.
+   */
+  AV1LrPickStruct pick_lr_ctxt;
+
+  /*!
    * Pointer to list of tables with film grain parameters.
    */
   aom_film_grain_table_t *film_grain_table;
@@ -3309,6 +3432,11 @@ typedef struct AV1_COMP {
   uint8_t *consec_zero_mv;
 
   /*!
+   * Allocated memory size for |consec_zero_mv|.
+   */
+  int consec_zero_mv_alloc_size;
+
+  /*!
    * Block size of first pass encoding
    */
   BLOCK_SIZE fp_block_size;
@@ -3380,6 +3508,23 @@ typedef struct AV1_COMP {
    * Buffer to store MB variance after Wiener filter.
    */
   WeberStats *mb_weber_stats;
+
+  /*!
+   * Buffer to store rate cost estimates for each macro block (8x8) in the
+   * preprocessing stage used in allintra mode.
+   */
+  int *prep_rate_estimates;
+
+  /*!
+   * Buffer to store rate cost estimates for each 16x16 block read
+   * from an external file, used in allintra mode.
+   */
+  double *ext_rate_distribution;
+
+  /*!
+   * The scale that equals sum_rate_uniform_quantizer / sum_ext_rate.
+   */
+  double ext_rate_scale;
 
   /*!
    * Buffer to store MB variance after Wiener filter.
@@ -3462,6 +3607,30 @@ typedef struct AV1_COMP {
    * Block level thresholds to force zeromv-skip at partition level.
    */
   unsigned int zeromv_skip_thresh_exit_part[BLOCK_SIZES_ALL];
+
+  /*!
+   *  Number of downsampling pyramid levels to allocate for each frame
+   *  This is currently only used for global motion
+   */
+  int image_pyramid_levels;
+
+#if CONFIG_SALIENCY_MAP
+  /*!
+   * Pixel level saliency map for each frame.
+   */
+  uint8_t *saliency_map;
+
+  /*!
+   * Superblock level rdmult scaling factor driven by saliency map.
+   */
+  double *sm_scaling_factor;
+#endif
+
+  /*!
+   * Number of pixels that choose palette mode for luma in the
+   * fast encoding pass in av1_determine_sc_tools_with_encoding().
+   */
+  int palette_pixel_num;
 } AV1_COMP;
 
 /*!
@@ -3599,11 +3768,11 @@ int av1_init_parallel_frame_context(const AV1_COMP_DATA *const first_cpi_data,
  * \ingroup high_level_algo
  * This function receives the raw frame data from input.
  *
- * \param[in]    cpi            Top-level encoder structure
- * \param[in]    frame_flags    Flags to decide how to encoding the frame
- * \param[in]    sd             Contain raw frame data
- * \param[in]    time_stamp     Time stamp of the frame
- * \param[in]    end_time_stamp End time stamp
+ * \param[in]     cpi            Top-level encoder structure
+ * \param[in]     frame_flags    Flags to decide how to encoding the frame
+ * \param[in,out] sd             Contain raw frame data
+ * \param[in]     time_stamp     Time stamp of the frame
+ * \param[in]     end_time_stamp End time stamp
  *
  * \return Returns a value to indicate if the frame data is received
  * successfully.
@@ -3679,6 +3848,10 @@ int av1_set_internal_size(AV1EncoderConfig *const oxcf,
 int av1_get_quantizer(struct AV1_COMP *cpi);
 
 int av1_convert_sect5obus_to_annexb(uint8_t *buffer, size_t *input_size);
+
+void av1_alloc_mb_wiener_var_pred_buf(AV1_COMMON *cm, ThreadData *td);
+
+void av1_dealloc_mb_wiener_var_pred_buf(ThreadData *td);
 
 // Set screen content options.
 // This function estimates whether to use screen content tools, by counting
@@ -4177,7 +4350,9 @@ static INLINE unsigned int derive_skip_apply_postproc_filters(
   }
   if (use_loopfilter) return SKIP_APPLY_LOOPFILTER;
 
-  return 0;  // All post-processing stages disabled.
+  // If we reach here, all post-processing stages are disabled, so none need to
+  // be skipped.
+  return 0;
 }
 
 static INLINE void set_postproc_filter_default_params(AV1_COMMON *cm) {
