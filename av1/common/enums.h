@@ -27,8 +27,6 @@ extern "C" {
 
 /*!\cond */
 
-#undef MAX_SB_SIZE
-
 // Max superblock size
 #define MAX_SB_SIZE_LOG2 7
 #define MAX_SB_SIZE (1 << MAX_SB_SIZE_LOG2)
@@ -199,7 +197,7 @@ typedef char PARTITION_CONTEXT;
 #define TX_PAD_END 16
 #define TX_PAD_2D ((32 + TX_PAD_HOR) * (32 + TX_PAD_VER) + TX_PAD_END)
 
-// Number of maxium size transform blocks in the maximum size superblock
+// Number of maximum size transform blocks in the maximum size superblock
 #define MAX_TX_BLOCKS_IN_MAX_SB_LOG2 ((MAX_SB_SIZE_LOG2 - MAX_TX_SIZE_LOG2) * 2)
 #define MAX_TX_BLOCKS_IN_MAX_SB (1 << MAX_TX_BLOCKS_IN_MAX_SB_LOG2)
 
@@ -558,7 +556,15 @@ enum {
 // REF_FRAMES for the cm->ref_frame_map array, 1 scratch frame for the new
 // frame in cm->cur_frame, INTER_REFS_PER_FRAME for scaled references on the
 // encoder in the cpi->scaled_ref_buf array.
+// The encoder uses FRAME_BUFFERS only in GOOD and REALTIME encoding modes.
+// The decoder also uses FRAME_BUFFERS.
 #define FRAME_BUFFERS (REF_FRAMES + 1 + INTER_REFS_PER_FRAME)
+
+// During allintra encoding, one reference frame buffer is free to be used again
+// only after another frame buffer is stored as the reference frame. Hence, it
+// is necessary and sufficient to maintain only two reference frame buffers in
+// this case.
+#define FRAME_BUFFERS_ALLINTRA 2
 
 #define FWD_RF_OFFSET(ref) (ref - LAST_FRAME)
 #define BWD_RF_OFFSET(ref) (ref - BWDREF_FRAME)
@@ -610,7 +616,7 @@ typedef enum {
 } RestorationType;
 
 /*!\cond */
-// Picture prediction structures (0-12 are predefined) in scalability metadata.
+// Picture prediction structures (0-13 are predefined) in scalability metadata.
 enum {
   SCALABILITY_L1T2 = 0,
   SCALABILITY_L1T3 = 1,
