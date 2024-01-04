@@ -20,10 +20,10 @@ third_party {
     type: GIT
     value: "https://aomedia.googlesource.com/aom/"
   }
-  version: "v3.7.0"
+  version: "v3.8.0"
   last_upgrade_date {
     year: 2023
-    month: 10
-    day: 9
+    month: 12
+    day: 6
   }
 }
