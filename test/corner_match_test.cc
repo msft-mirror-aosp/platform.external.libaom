@@ -27,9 +27,9 @@ namespace AV1CornerMatch {
 
 using libaom_test::ACMRandom;
 
-typedef double (*ComputeCrossCorrFunc)(unsigned char *im1, int stride1, int x1,
-                                       int y1, unsigned char *im2, int stride2,
-                                       int x2, int y2);
+typedef double (*ComputeCrossCorrFunc)(const unsigned char *im1, int stride1,
+                                       int x1, int y1, const unsigned char *im2,
+                                       int stride2, int x2, int y2);
 
 using std::make_tuple;
 using std::tuple;
@@ -37,10 +37,8 @@ typedef tuple<int, ComputeCrossCorrFunc> CornerMatchParam;
 
 class AV1CornerMatchTest : public ::testing::TestWithParam<CornerMatchParam> {
  public:
-  virtual ~AV1CornerMatchTest();
-  virtual void SetUp();
-
-  virtual void TearDown();
+  ~AV1CornerMatchTest() override;
+  void SetUp() override;
 
  protected:
   void RunCheckOutput(int run_times);
@@ -50,12 +48,11 @@ class AV1CornerMatchTest : public ::testing::TestWithParam<CornerMatchParam> {
 };
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AV1CornerMatchTest);
 
-AV1CornerMatchTest::~AV1CornerMatchTest() {}
+AV1CornerMatchTest::~AV1CornerMatchTest() = default;
 void AV1CornerMatchTest::SetUp() {
   rnd_.Reset(ACMRandom::DeterministicSeed());
   target_func = GET_PARAM(1);
 }
-void AV1CornerMatchTest::TearDown() {}
 
 void AV1CornerMatchTest::RunCheckOutput(int run_times) {
   const int w = 128, h = 128;

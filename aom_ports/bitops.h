@@ -32,7 +32,9 @@ extern "C" {
 // Returns (int)floor(log2(n)). n must be > 0.
 // These versions of get_msb() are only valid when n != 0 because all
 // of the optimized versions are undefined when n == 0:
-// https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+
+// GCC compiler: https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+// MSVC: https://learn.microsoft.com/en-us/cpp/intrinsics/compiler-intrinsics
 
 // use GNU builtins where available.
 #if defined(__GNUC__) && \
@@ -55,12 +57,10 @@ static INLINE int get_msb(unsigned int n) {
 static INLINE int get_msb(unsigned int n) {
   int log = 0;
   unsigned int value = n;
-  int i;
 
   assert(n != 0);
 
-  for (i = 4; i >= 0; --i) {
-    const int shift = (1 << i);
+  for (int shift = 16; shift != 0; shift >>= 1) {
     const unsigned int x = value >> shift;
     if (x != 0) {
       value = x;
