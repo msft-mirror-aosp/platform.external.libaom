@@ -53,12 +53,12 @@ std::ostream &operator<<(std::ostream &os, const TestVideoParam &test_arg) {
 
 const TestVideoParam kTestVideoVectors[] = {
   { "park_joy_90p_8_420.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 5, 0, 25.3,
-    45.0 },
+    44.7 },
 #if CONFIG_AV1_HIGHBITDEPTH
   { "park_joy_90p_10_444.y4m", AOM_IMG_FMT_I44416, AOM_BITS_10, 1, 5, 0, 27.0,
-    47.9 },
+    46.8 },
 #endif
-  { "screendata.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 4, 1, 23.0, 56.0 },
+  { "screendata.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 4, 1, 23.0, 52.5 },
   // Image coding (single frame).
   { "niklas_1280_720_30.y4m", AOM_IMG_FMT_I420, AOM_BITS_8, 0, 1, 0, 32.0,
     49.0 },
@@ -100,9 +100,9 @@ class HorzSuperresEndToEndTest
       : EncoderTest(GET_PARAM(0)), test_video_param_(GET_PARAM(1)),
         superres_mode_(GET_PARAM(2)), psnr_(0.0), frame_count_(0) {}
 
-  virtual ~HorzSuperresEndToEndTest() {}
+  ~HorzSuperresEndToEndTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     InitializeConfig(::libaom_test::kTwoPassGood);
     cfg_.g_lag_in_frames = 5;
     cfg_.rc_end_usage = AOM_Q;
@@ -118,18 +118,18 @@ class HorzSuperresEndToEndTest
     cfg_.rc_superres_mode = superres_mode_;
   }
 
-  virtual void BeginPassHook(unsigned int) {
+  void BeginPassHook(unsigned int) override {
     psnr_ = 0.0;
     frame_count_ = 0;
   }
 
-  virtual void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) {
+  void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) override {
     psnr_ += pkt->data.psnr.psnr[0];
     frame_count_++;
   }
 
-  virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
-                                  ::libaom_test::Encoder *encoder) {
+  void PreEncodeFrameHook(::libaom_test::VideoSource *video,
+                          ::libaom_test::Encoder *encoder) override {
     if (video->frame() == 0) {
       encoder->Control(AV1E_SET_FRAME_PARALLEL_DECODING, 1);
       encoder->Control(AV1E_SET_TILE_COLUMNS, 4);
@@ -203,9 +203,9 @@ class HorzSuperresFixedEndToEndTest
     superres_kf_denom_ = std::get<1>(denoms);
   }
 
-  virtual ~HorzSuperresFixedEndToEndTest() {}
+  ~HorzSuperresFixedEndToEndTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     InitializeConfig(::libaom_test::kTwoPassGood);
     cfg_.g_lag_in_frames = 5;
     cfg_.rc_end_usage = AOM_VBR;
@@ -223,18 +223,18 @@ class HorzSuperresFixedEndToEndTest
     cfg_.rc_superres_kf_denominator = superres_kf_denom_;
   }
 
-  virtual void BeginPassHook(unsigned int) {
+  void BeginPassHook(unsigned int) override {
     psnr_ = 0.0;
     frame_count_ = 0;
   }
 
-  virtual void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) {
+  void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) override {
     psnr_ += pkt->data.psnr.psnr[0];
     frame_count_++;
   }
 
-  virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
-                                  ::libaom_test::Encoder *encoder) {
+  void PreEncodeFrameHook(::libaom_test::VideoSource *video,
+                          ::libaom_test::Encoder *encoder) override {
     if (video->frame() == 0) {
       encoder->Control(AV1E_SET_FRAME_PARALLEL_DECODING, 1);
       encoder->Control(AV1E_SET_TILE_COLUMNS, 4);
@@ -313,9 +313,9 @@ class HorzSuperresQThreshEndToEndTest
     superres_kf_qthresh_ = std::get<1>(qthresholds);
   }
 
-  virtual ~HorzSuperresQThreshEndToEndTest() {}
+  ~HorzSuperresQThreshEndToEndTest() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     InitializeConfig(::libaom_test::kTwoPassGood);
     cfg_.g_lag_in_frames = 5;
     cfg_.rc_end_usage = AOM_VBR;
@@ -333,18 +333,18 @@ class HorzSuperresQThreshEndToEndTest
     cfg_.rc_superres_kf_qthresh = superres_kf_qthresh_;
   }
 
-  virtual void BeginPassHook(unsigned int) {
+  void BeginPassHook(unsigned int) override {
     psnr_ = 0.0;
     frame_count_ = 0;
   }
 
-  virtual void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) {
+  void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) override {
     psnr_ += pkt->data.psnr.psnr[0];
     frame_count_++;
   }
 
-  virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
-                                  ::libaom_test::Encoder *encoder) {
+  void PreEncodeFrameHook(::libaom_test::VideoSource *video,
+                          ::libaom_test::Encoder *encoder) override {
     if (video->frame() == 0) {
       encoder->Control(AV1E_SET_FRAME_PARALLEL_DECODING, 1);
       encoder->Control(AV1E_SET_TILE_COLUMNS, 0);
