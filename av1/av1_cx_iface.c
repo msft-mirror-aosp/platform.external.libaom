@@ -8,6 +8,7 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -543,6 +544,7 @@ struct aom_codec_alg_priv {
   // Number of stats buffers required for look ahead
   int num_lap_buffers;
   STATS_BUFFER_CTX stats_buf_context;
+  bool monochrome_on_init;
 };
 
 static INLINE int gcd(int64_t a, int b) {
@@ -644,6 +646,18 @@ static aom_codec_err_t validate_config(aom_codec_alg_priv_t *ctx,
   if (cfg->g_forced_max_frame_height) {
     RANGE_CHECK_HI(cfg, g_h, cfg->g_forced_max_frame_height);
   }
+  // To avoid integer overflows when multiplying width by height (or values
+  // derived from width and height) using the int type, impose a maximum frame
+  // area (width * height) of 2^30.
+  const unsigned int max_frame_width =
+      cfg->g_forced_max_frame_width ? cfg->g_forced_max_frame_width : cfg->g_w;
+  const unsigned int max_frame_height = cfg->g_forced_max_frame_height
+                                            ? cfg->g_forced_max_frame_height
+                                            : cfg->g_h;
+  const int64_t max_frame_area = (int64_t)max_frame_width * max_frame_height;
+  if (max_frame_area > (1 << 30)) {
+    ERROR("max_frame_area out of range [..2^30]");
+  }
   RANGE_CHECK(cfg, g_timebase.den, 1, 1000000000);
   RANGE_CHECK(cfg, g_timebase.num, 1, cfg->g_timebase.den);
   RANGE_CHECK_HI(cfg, g_profile, MAX_PROFILES - 1);
@@ -668,11 +682,7 @@ static aom_codec_err_t validate_config(aom_codec_alg_priv_t *ctx,
   RANGE_CHECK(cfg, kf_mode, AOM_KF_DISABLED, AOM_KF_AUTO);
   RANGE_CHECK_HI(cfg, rc_dropframe_thresh, 100);
   RANGE_CHECK(cfg, g_pass, AOM_RC_ONE_PASS, AOM_RC_THIRD_PASS);
-  if (cfg->g_pass == AOM_RC_ONE_PASS) {
-    RANGE_CHECK_HI(cfg, g_lag_in_frames, MAX_TOTAL_BUFFERS);
-  } else {
-    RANGE_CHECK_HI(cfg, g_lag_in_frames, MAX_LAG_BUFFERS);
-  }
+  RANGE_CHECK_HI(cfg, g_lag_in_frames, MAX_LAG_BUFFERS);
   if (cfg->g_usage == AOM_USAGE_ALL_INTRA) {
     RANGE_CHECK_HI(cfg, g_lag_in_frames, 0);
     RANGE_CHECK_HI(cfg, kf_max_dist, 0);
@@ -1489,20 +1499,33 @@ AV1EncoderConfig av1_get_encoder_config(const aom_codec_enc_cfg_t *cfg) {
 
 static aom_codec_err_t encoder_set_config(aom_codec_alg_priv_t *ctx,
                                           const aom_codec_enc_cfg_t *cfg) {
-  InitialDimensions *const initial_dimensions =
-      &ctx->ppi->cpi->initial_dimensions;
   aom_codec_err_t res;
   int force_key = 0;
 
   if (cfg->g_w != ctx->cfg.g_w || cfg->g_h != ctx->cfg.g_h) {
     if (cfg->g_lag_in_frames > 1 || cfg->g_pass != AOM_RC_ONE_PASS)
       ERROR("Cannot change width or height after initialization");
-    if (!valid_ref_frame_size(ctx->cfg.g_w, ctx->cfg.g_h, cfg->g_w, cfg->g_h) ||
-        (initial_dimensions->width &&
-         (int)cfg->g_w > initial_dimensions->width) ||
-        (initial_dimensions->height &&
-         (int)cfg->g_h > initial_dimensions->height))
+    // Note: function encoder_set_config() is allowed to be called multiple
+    // times. However, when the original frame width or height is less than two
+    // times of the new frame width or height, a forced key frame should be
+    // used. To make sure the correct detection of a forced key frame, we need
+    // to update the frame width and height only when the actual encoding is
+    // performed. cpi->last_coded_width and cpi->last_coded_height are used to
+    // track the actual coded frame size.
+    if (ctx->ppi->cpi->last_coded_width && ctx->ppi->cpi->last_coded_height &&
+        (!valid_ref_frame_size(ctx->ppi->cpi->last_coded_width,
+                               ctx->ppi->cpi->last_coded_height, cfg->g_w,
+                               cfg->g_h) ||
+         ((int)cfg->g_w > ctx->ppi->cpi->last_coded_width) ||
+         ((int)cfg->g_h > ctx->ppi->cpi->last_coded_height))) {
       force_key = 1;
+    }
+  }
+
+  if (ctx->monochrome_on_init && cfg->monochrome == 0) {
+    // TODO(aomedia:3465): Allow this case to work without requiring re-init
+    // of encoder.
+    ERROR("Cannot change to monochrome = 0 after init with monochrome");
   }
 
   // Prevent increasing lag_in_frames. This check is stricter than it needs
@@ -2569,6 +2592,17 @@ static aom_codec_err_t ctrl_set_bitrate_one_pass_cbr(aom_codec_alg_priv_t *ctx,
   return AOM_CODEC_OK;
 }
 
+static aom_codec_err_t ctrl_set_max_consec_frame_drop_cbr(
+    aom_codec_alg_priv_t *ctx, va_list args) {
+  AV1_PRIMARY *const ppi = ctx->ppi;
+  AV1_COMP *const cpi = ppi->cpi;
+  const int max_consec_drop = CAST(AV1E_SET_MAX_CONSEC_FRAME_DROP_CBR, args);
+  if (max_consec_drop < 0) return AOM_CODEC_INVALID_PARAM;
+  cpi->rc.max_consec_drop = max_consec_drop;
+  cpi->rc.drop_count_consec = 0;
+  return AOM_CODEC_OK;
+}
+
 #if !CONFIG_REALTIME_ONLY
 aom_codec_err_t av1_create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
                                         STATS_BUFFER_CTX *stats_buf_context,
@@ -2721,6 +2755,8 @@ static aom_codec_err_t encoder_init(aom_codec_ctx_t *ctx) {
       }
       priv->oxcf.use_highbitdepth =
           (ctx->init_flags & AOM_CODEC_USE_HIGHBITDEPTH) ? 1 : 0;
+
+      priv->monochrome_on_init = priv->cfg.monochrome;
 
       priv->ppi = av1_create_primary_compressor(&priv->pkt_list.head,
                                                 *num_lap_buffers, &priv->oxcf);
@@ -2894,6 +2930,9 @@ static aom_codec_err_t encoder_encode(aom_codec_alg_priv_t *ctx,
   // LAP context
   AV1_COMP *cpi_lap = ppi->cpi_lap;
   if (ppi->cpi == NULL) return AOM_CODEC_INVALID_PARAM;
+
+  ppi->cpi->last_coded_width = ppi->cpi->oxcf.frm_dim_cfg.width;
+  ppi->cpi->last_coded_height = ppi->cpi->oxcf.frm_dim_cfg.height;
 
   if (ppi->lap_enabled && cpi_lap == NULL &&
       ppi->cpi->oxcf.pass == AOM_RC_ONE_PASS)
@@ -3094,11 +3133,24 @@ static aom_codec_err_t encoder_encode(aom_codec_alg_priv_t *ctx,
       av1_compute_num_workers_for_mt(cpi);
       num_workers = av1_get_max_num_workers(cpi);
     }
-    if ((num_workers > 1) && (ppi->p_mt_info.num_workers == 0)) {
+    if (num_workers > 1 && ppi->p_mt_info.num_workers < num_workers) {
       // Obtain the maximum no. of frames that can be supported in a parallel
       // encode set.
       if (is_stat_consumption_stage(cpi)) {
         ppi->num_fp_contexts = av1_compute_num_fp_contexts(ppi, &cpi->oxcf);
+      }
+      if (ppi->p_mt_info.num_workers > 0) {
+        av1_terminate_workers(ppi);
+        free_thread_data(ppi);
+        aom_free(ppi->p_mt_info.tile_thr_data);
+        ppi->p_mt_info.tile_thr_data = NULL;
+        aom_free(ppi->p_mt_info.workers);
+        ppi->p_mt_info.workers = NULL;
+        ppi->p_mt_info.num_workers = 0;
+        for (int j = 0; j < ppi->num_fp_contexts; j++) {
+          aom_free(ppi->parallel_cpi[j]->td.tctx);
+          ppi->parallel_cpi[j]->td.tctx = NULL;
+        }
       }
       av1_create_workers(ppi, num_workers);
       av1_init_tile_thread_data(ppi, cpi->oxcf.pass == AOM_RC_FIRST_PASS);
@@ -3144,7 +3196,8 @@ static aom_codec_err_t encoder_encode(aom_codec_alg_priv_t *ctx,
       const int status = av1_get_compressed_data(cpi_lap, &cpi_lap_data);
       if (status != -1) {
         if (status != AOM_CODEC_OK) {
-          aom_internal_error(&ppi->error, AOM_CODEC_ERROR, NULL);
+          aom_internal_error(&ppi->error, cpi->common.error->error_code, "%s",
+                             cpi->common.error->detail);
         }
       }
       av1_post_encode_updates(cpi_lap, &cpi_lap_data);
@@ -3156,12 +3209,6 @@ static aom_codec_err_t encoder_encode(aom_codec_alg_priv_t *ctx,
         cpi->gf_frame_index == ppi->gf_group.size) {
       ppi->num_fp_contexts = av1_compute_num_fp_contexts(ppi, &cpi->oxcf);
     }
-
-    // Reset gf_frame_index in case it reaches MAX_STATIC_GF_GROUP_LENGTH for
-    // real time encoding.
-    if (is_one_pass_rt_params(cpi) &&
-        cpi->gf_frame_index == MAX_STATIC_GF_GROUP_LENGTH)
-      cpi->gf_frame_index = 0;
 
     // Get the next visible frame. Invisible frames get packed with the next
     // visible frame.
@@ -3200,7 +3247,8 @@ static aom_codec_err_t encoder_encode(aom_codec_alg_priv_t *ctx,
       }
       if (status == -1) break;
       if (status != AOM_CODEC_OK) {
-        aom_internal_error(&ppi->error, AOM_CODEC_ERROR, NULL);
+        aom_internal_error(&ppi->error, cpi->common.error->error_code, "%s",
+                           cpi->common.error->detail);
       }
       if (ppi->num_fp_contexts > 0 && frame_is_intra_only(&cpi->common)) {
         av1_init_sc_decisions(ppi);
@@ -3557,7 +3605,12 @@ static aom_codec_err_t ctrl_set_svc_params(aom_codec_alg_priv_t *ctx,
         lc->min_q = params->min_quantizers[layer];
         lc->scaling_factor_num = params->scaling_factor_num[sl];
         lc->scaling_factor_den = params->scaling_factor_den[sl];
-        lc->layer_target_bitrate = 1000 * params->layer_target_bitrate[layer];
+        const int layer_target_bitrate = params->layer_target_bitrate[layer];
+        if (layer_target_bitrate > INT_MAX / 1000) {
+          lc->layer_target_bitrate = INT_MAX;
+        } else {
+          lc->layer_target_bitrate = 1000 * layer_target_bitrate;
+        }
         lc->framerate_factor = params->framerate_factor[tl];
         if (tl == ppi->number_temporal_layers - 1)
           target_bandwidth += lc->layer_target_bitrate;
@@ -4344,6 +4397,7 @@ static aom_codec_ctrl_fn_map_t encoder_ctrl_maps[] = {
   { AV1E_SET_RTC_EXTERNAL_RC, ctrl_set_rtc_external_rc },
   { AV1E_SET_QUANTIZER_ONE_PASS, ctrl_set_quantizer_one_pass },
   { AV1E_SET_BITRATE_ONE_PASS_CBR, ctrl_set_bitrate_one_pass_cbr },
+  { AV1E_SET_MAX_CONSEC_FRAME_DROP_CBR, ctrl_set_max_consec_frame_drop_cbr },
 
   // Getters
   { AOME_GET_LAST_QUANTIZER, ctrl_get_quantizer },

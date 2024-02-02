@@ -1,5 +1,5 @@
 ;
-; Copyright (c) 2023, Alliance for Open Media. All rights reserved
+; Copyright (c) 2024, Alliance for Open Media. All rights reserved
 ;
 ; This source code is subject to the terms of the BSD 2 Clause License and
 ; the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -76,6 +76,8 @@ HAVE_AVX2 equ 0
 HAVE_FEXCEPT equ 1
 HAVE_MMX equ 0
 HAVE_NEON equ 0
+HAVE_NEON_DOTPROD equ 0
+HAVE_NEON_I8MM equ 0
 HAVE_PTHREAD_H equ 1
 HAVE_SSE equ 0
 HAVE_SSE2 equ 0
@@ -83,6 +85,7 @@ HAVE_SSE3 equ 0
 HAVE_SSE4_1 equ 0
 HAVE_SSE4_2 equ 0
 HAVE_SSSE3 equ 0
+HAVE_SVE equ 0
 HAVE_UNISTD_H equ 1
 HAVE_VSX equ 0
 HAVE_WXWIDGETS equ 0
