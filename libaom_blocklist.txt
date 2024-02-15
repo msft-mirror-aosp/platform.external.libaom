@@ -7,6 +7,7 @@ fun:highbd_dr_predictor
 # libaom/av1/encoder/ratectrl.c: indirect call to assembly code on x86/x86_64 platform
 fun:rc_scene_detection_onepass_rt
 # libaom/av1/encoder/var_based_part.c: indirect call to assembly code on x86/x86_64 platform
+fun:evaluate_neighbour_mvs
 fun:setup_planes
 fun:chroma_check
 # libaom/av1/encoder/rd.c: indirect call to assembly code on x86/x86_64 platform
@@ -25,3 +26,5 @@ fun:av1_get_perpixel_variance_facade
 fun:highbd_10_variance_sse2
 # libaom/av1/encoder/encodeframe_utils.c: indirect call to assembly code on x86/x86_64 platform
 fun:fast_detect_non_zero_motion
+# libaom/av1/common/reconintra.c: indirect call to assembly code on x86/x86_64 platform
+fun:highbd_build_intra_predictors
