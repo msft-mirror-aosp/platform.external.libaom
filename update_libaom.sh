@@ -90,6 +90,6 @@ sed -E -i'' \
 
 git commit -a -v
 
-echo "Update the version field in README.android, README.version and METADATA."
+echo "Update the version field in README.android and METADATA."
 
 chmod 755 build/cmake/*.pl
