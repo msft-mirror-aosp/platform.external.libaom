@@ -731,28 +731,26 @@ cc_library_static {
 
         // configured to require the neon unit
         arm: {
-            neon: {
-                local_include_dirs: [
-                    "config/",
-                    "config/arm/",
-                ],
-                srcs: aom_av1_common_sources +
-                    aom_av1_decoder_sources +
-                    aom_dsp_common_sources +
-                    aom_dsp_decoder_sources +
-                    aom_mem_sources +
-                    aom_rtcd_sources +
-                    ["aom_ports/aarch32_cpudetect.c"] +
-                    aom_scale_sources +
-                    aom_sources +
-                    aom_util_sources +
-                    aom_av1_common_intrin_neon +
-                    aom_dsp_common_intrin_neon +
-                    aom_av1_encoder_intrin_neon +
-                    aom_av1_encoder_sources +
-                    aom_dsp_encoder_intrin_neon +
-                    aom_dsp_encoder_sources,
-            },
+            local_include_dirs: [
+                "config/",
+                "config/arm/",
+            ],
+            srcs: aom_av1_common_sources +
+                aom_av1_decoder_sources +
+                aom_dsp_common_sources +
+                aom_dsp_decoder_sources +
+                aom_mem_sources +
+                aom_rtcd_sources +
+                ["aom_ports/aarch32_cpudetect.c"] +
+                aom_scale_sources +
+                aom_sources +
+                aom_util_sources +
+                aom_av1_common_intrin_neon +
+                aom_dsp_common_intrin_neon +
+                aom_av1_encoder_intrin_neon +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_intrin_neon +
+                aom_dsp_encoder_sources,
         },
 
         x86_64: {
@@ -863,12 +861,10 @@ cc_fuzz {
     ],
     arch: {
         arm: {
-            neon: {
-                local_include_dirs: [
-                    "config/",
-                    "config/arm/",
-                ],
-            },
+            local_include_dirs: [
+                "config/",
+                "config/arm/",
+            ],
         },
 
         arm64: {
