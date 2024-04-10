@@ -26,3 +26,5 @@ fun:av1_get_perpixel_variance_facade
 fun:highbd_10_variance_sse2
 # libaom/av1/encoder/encodeframe_utils.c: indirect call to assembly code on x86/x86_64 platform
 fun:fast_detect_non_zero_motion
+# libaom/av1/common/reconintra.c: indirect call to assembly code on x86/x86_64 platform
+fun:highbd_build_intra_predictors
