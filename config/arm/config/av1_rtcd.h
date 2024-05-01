@@ -188,7 +188,8 @@ void av1_cnn_batchnorm_c(float **image, int channels, int width, int height, int
 #define av1_cnn_batchnorm av1_cnn_batchnorm_c
 
 void av1_cnn_convolve_no_maxpool_padding_valid_c(const float **input, int in_width, int in_height, int in_stride, const CNN_LAYER_CONFIG *layer_config, float **output, int out_stride, int start_idx, int cstep, int channel_step);
-#define av1_cnn_convolve_no_maxpool_padding_valid av1_cnn_convolve_no_maxpool_padding_valid_c
+void av1_cnn_convolve_no_maxpool_padding_valid_neon(const float **input, int in_width, int in_height, int in_stride, const CNN_LAYER_CONFIG *layer_config, float **output, int out_stride, int start_idx, int cstep, int channel_step);
+#define av1_cnn_convolve_no_maxpool_padding_valid av1_cnn_convolve_no_maxpool_padding_valid_neon
 
 void av1_cnn_deconvolve_c(const float **input, int in_width, int in_height, int in_stride, const CNN_LAYER_CONFIG *layer_config, float **output, int out_stride);
 #define av1_cnn_deconvolve av1_cnn_deconvolve_c
@@ -437,13 +438,16 @@ void av1_highbd_dist_wtd_convolve_y_neon(const uint16_t *src, int src_stride, ui
 #define av1_highbd_dist_wtd_convolve_y av1_highbd_dist_wtd_convolve_y_neon
 
 void av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int dx, int dy, int bd);
-#define av1_highbd_dr_prediction_z1 av1_highbd_dr_prediction_z1_c
+void av1_highbd_dr_prediction_z1_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int dx, int dy, int bd);
+#define av1_highbd_dr_prediction_z1 av1_highbd_dr_prediction_z1_neon
 
 void av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd);
-#define av1_highbd_dr_prediction_z2 av1_highbd_dr_prediction_z2_c
+void av1_highbd_dr_prediction_z2_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd);
+#define av1_highbd_dr_prediction_z2 av1_highbd_dr_prediction_z2_neon
 
 void av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
-#define av1_highbd_dr_prediction_z3 av1_highbd_dr_prediction_z3_c
+void av1_highbd_dr_prediction_z3_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
+#define av1_highbd_dr_prediction_z3 av1_highbd_dr_prediction_z3_neon
 
 double av1_highbd_estimate_noise_from_single_plane_c(const uint16_t *src, int height, int width, int stride, int bit_depth, int edge_thresh);
 double av1_highbd_estimate_noise_from_single_plane_neon(const uint16_t *src, int height, int width, int stride, int bit_depth, int edge_thresh);
@@ -532,7 +536,8 @@ void av1_highbd_iwht4x4_1_add_c(const tran_low_t *input, uint8_t *dest, int dest
 #define av1_highbd_iwht4x4_1_add av1_highbd_iwht4x4_1_add_c
 
 int64_t av1_highbd_pixel_proj_error_c(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int xq[2], const sgr_params_type *params);
-#define av1_highbd_pixel_proj_error av1_highbd_pixel_proj_error_c
+int64_t av1_highbd_pixel_proj_error_neon(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int xq[2], const sgr_params_type *params);
+#define av1_highbd_pixel_proj_error av1_highbd_pixel_proj_error_neon
 
 void av1_highbd_quantize_fp_c(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan, int log_scale);
 void av1_highbd_quantize_fp_neon(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan, int log_scale);
