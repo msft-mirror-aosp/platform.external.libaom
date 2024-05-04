@@ -86,25 +86,6 @@ function gen_config_files {
   #clang-format -i "${CFG}/${1}/config/"*_rtcd.h
 }
 
-function update_readme {
-  local IFS=$'\n'
-  # Split git log output '<date>\n<commit hash>' on the newline to produce 2
-  # array entries.
-  local vals=($(git -C "${SRC}" --no-pager log -1 --format="%cd%n%H" \
-    --date=format:"%A %B %d %Y"))
-  sed -E -i.bak \
-    -e "s/^(Date:)[[:space:]]+.*$/\1 ${vals[0]}/" \
-    -e "s/^(Commit:)[[:space:]]+[a-f0-9]{40}/\1 ${vals[1]}/" \
-    ${BASE}/README.android
-  rm ${BASE}/README.android.bak
-  cat <<EOF
-
-README.android updated with:
-Date: ${vals[0]}
-Commit: ${vals[1]}
-EOF
-}
-
 cd "${TMP}"
 
 # Scope 'trap' error reporting to configuration generation.
@@ -148,9 +129,6 @@ gen_config_files arm64 "${toolchain}/arm64-linux-gcc.cmake ${all_platforms} \
 reset_dirs riscv64
 gen_config_files riscv64 "${toolchain}/riscv-linux-gcc.cmake ${all_platforms}"
 )
-
-# This needs to be run by update_libaom.sh before the .git file is removed.
-#update_readme
 
 # libaom_srcs.gni was built for Chromium. Remove:
 # - the path prefix (//third_party/libaom/source/libaom/)
