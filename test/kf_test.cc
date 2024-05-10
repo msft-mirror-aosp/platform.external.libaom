@@ -9,9 +9,14 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
+#include <string.h>
+
 #include <ostream>
 
 #include "aom/aom_codec.h"
+#include "aom/aom_encoder.h"
+#include "aom/aom_image.h"
+#include "aom/aomcx.h"
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "test/codec_factory.h"
 #include "test/encode_test_driver.h"
@@ -21,6 +26,87 @@
 #define NUM_LAG_VALUES 3
 
 namespace {
+aom_image_t *CreateGrayImage(aom_img_fmt_t fmt, unsigned int w,
+                             unsigned int h) {
+  aom_image_t *const image = aom_img_alloc(nullptr, fmt, w, h, 1);
+  if (!image) return image;
+
+  for (unsigned int i = 0; i < image->d_h; ++i) {
+    memset(image->planes[0] + i * image->stride[0], 128, image->d_w);
+  }
+  const unsigned int uv_h = (image->d_h + 1) / 2;
+  const unsigned int uv_w = (image->d_w + 1) / 2;
+  for (unsigned int i = 0; i < uv_h; ++i) {
+    memset(image->planes[1] + i * image->stride[1], 128, uv_w);
+    memset(image->planes[2] + i * image->stride[2], 128, uv_w);
+  }
+  return image;
+}
+
+// Tests kf_max_dist in one-pass encoding with zero lag.
+void TestKeyFrameMaximumInterval(unsigned int usage, unsigned int kf_max_dist) {
+  aom_codec_iface_t *iface = aom_codec_av1_cx();
+  aom_codec_enc_cfg_t cfg;
+  ASSERT_EQ(aom_codec_enc_config_default(iface, &cfg, usage), AOM_CODEC_OK);
+  cfg.g_w = 320;
+  cfg.g_h = 240;
+  cfg.g_pass = AOM_RC_ONE_PASS;
+  cfg.g_lag_in_frames = 0;
+  cfg.kf_mode = AOM_KF_AUTO;
+  cfg.kf_min_dist = 0;
+  cfg.kf_max_dist = kf_max_dist;
+
+  aom_codec_ctx_t enc;
+  ASSERT_EQ(aom_codec_enc_init(&enc, iface, &cfg, 0), AOM_CODEC_OK);
+
+  ASSERT_EQ(aom_codec_control(&enc, AOME_SET_CPUUSED, 6), AOM_CODEC_OK);
+
+  aom_image_t *image = CreateGrayImage(AOM_IMG_FMT_I420, cfg.g_w, cfg.g_h);
+  ASSERT_NE(image, nullptr);
+
+  // Encode frames.
+  const aom_codec_cx_pkt_t *pkt;
+  const unsigned int num_frames = kf_max_dist == 0 ? 4 : 3 * kf_max_dist + 1;
+  for (unsigned int i = 0; i < num_frames; ++i) {
+    ASSERT_EQ(aom_codec_encode(&enc, image, i, 1, 0), AOM_CODEC_OK);
+    aom_codec_iter_t iter = nullptr;
+    while ((pkt = aom_codec_get_cx_data(&enc, &iter)) != nullptr) {
+      ASSERT_EQ(pkt->kind, AOM_CODEC_CX_FRAME_PKT);
+      if (kf_max_dist == 0 || i % kf_max_dist == 0) {
+        ASSERT_EQ(pkt->data.frame.flags & AOM_FRAME_IS_KEY, AOM_FRAME_IS_KEY);
+      } else {
+        ASSERT_EQ(pkt->data.frame.flags & AOM_FRAME_IS_KEY, 0u);
+      }
+    }
+  }
+
+  // Flush the encoder.
+  bool got_data;
+  do {
+    ASSERT_EQ(aom_codec_encode(&enc, nullptr, 0, 1, 0), AOM_CODEC_OK);
+    got_data = false;
+    aom_codec_iter_t iter = nullptr;
+    while ((pkt = aom_codec_get_cx_data(&enc, &iter)) != nullptr) {
+      ASSERT_EQ(pkt->kind, AOM_CODEC_CX_FRAME_PKT);
+      got_data = true;
+    }
+  } while (got_data);
+
+  aom_img_free(image);
+  ASSERT_EQ(aom_codec_destroy(&enc), AOM_CODEC_OK);
+}
+
+TEST(KeyFrameIntervalTest, KeyFrameMaximumInterval) {
+  for (unsigned int usage : { AOM_USAGE_GOOD_QUALITY, AOM_USAGE_REALTIME }) {
+    // Test 0 and 1 (both mean all intra), some powers of 2, some multiples of
+    // 10, and some prime numbers.
+    for (unsigned int kf_max_dist :
+         { 0, 1, 2, 3, 4, 7, 10, 13, 16, 20, 23, 29, 32 }) {
+      TestKeyFrameMaximumInterval(usage, kf_max_dist);
+    }
+  }
+}
+
 typedef struct {
   const unsigned int min_kf_dist;
   const unsigned int max_kf_dist;
@@ -47,9 +133,9 @@ class KeyFrameIntervalTestLarge
     kf_dist_ = -1;
     is_kf_interval_violated_ = false;
   }
-  virtual ~KeyFrameIntervalTestLarge() {}
+  ~KeyFrameIntervalTestLarge() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     InitializeConfig(encoding_mode_);
     const aom_rational timebase = { 1, 30 };
     cfg_.g_timebase = timebase;
@@ -60,18 +146,18 @@ class KeyFrameIntervalTestLarge
     cfg_.g_lag_in_frames = 19;
   }
 
-  virtual bool DoDecode() const { return 1; }
+  bool DoDecode() const override { return true; }
 
-  virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
-                                  ::libaom_test::Encoder *encoder) {
+  void PreEncodeFrameHook(::libaom_test::VideoSource *video,
+                          ::libaom_test::Encoder *encoder) override {
     if (video->frame() == 0) {
       encoder->Control(AOME_SET_CPUUSED, 5);
       encoder->Control(AOME_SET_ENABLEAUTOALTREF, 1);
     }
   }
 
-  virtual bool HandleDecodeResult(const aom_codec_err_t res_dec,
-                                  libaom_test::Decoder *decoder) {
+  bool HandleDecodeResult(const aom_codec_err_t res_dec,
+                          libaom_test::Decoder *decoder) override {
     EXPECT_EQ(AOM_CODEC_OK, res_dec) << decoder->DecodeError();
     if (AOM_CODEC_OK == res_dec) {
       aom_codec_ctx_t *ctx_dec = decoder->GetDecoder();
@@ -149,9 +235,9 @@ class ForcedKeyTestLarge
     frame_num_ = 0;
     is_kf_placement_violated_ = false;
   }
-  virtual ~ForcedKeyTestLarge() {}
+  ~ForcedKeyTestLarge() override = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     InitializeConfig(encoding_mode_);
     cfg_.rc_end_usage = rc_end_usage_;
     cfg_.g_threads = 0;
@@ -160,8 +246,8 @@ class ForcedKeyTestLarge
     cfg_.fwd_kf_enabled = fwd_kf_enabled_;
   }
 
-  virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
-                                  ::libaom_test::Encoder *encoder) {
+  void PreEncodeFrameHook(::libaom_test::VideoSource *video,
+                          ::libaom_test::Encoder *encoder) override {
     if (video->frame() == 0) {
       encoder->Control(AOME_SET_CPUUSED, cpu_used_);
       encoder->Control(AOME_SET_ENABLEAUTOALTREF, auto_alt_ref_);
@@ -176,8 +262,8 @@ class ForcedKeyTestLarge
         ((int)video->frame() == forced_kf_frame_num_) ? AOM_EFLAG_FORCE_KF : 0;
   }
 
-  virtual bool HandleDecodeResult(const aom_codec_err_t res_dec,
-                                  libaom_test::Decoder *decoder) {
+  bool HandleDecodeResult(const aom_codec_err_t res_dec,
+                          libaom_test::Decoder *decoder) override {
     EXPECT_EQ(AOM_CODEC_OK, res_dec) << decoder->DecodeError();
     if (AOM_CODEC_OK == res_dec) {
       if ((int)frame_num_ == forced_kf_frame_num_) {

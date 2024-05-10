@@ -379,6 +379,16 @@ INSTANTIATE_TEST_SUITE_P(
     NEON, WedgeUtilsSSEOptTest,
     ::testing::Values(TestFuncsFSSE(av1_wedge_sse_from_residuals_c,
                                     av1_wedge_sse_from_residuals_neon)));
+
+INSTANTIATE_TEST_SUITE_P(
+    NEON, WedgeUtilsSignOptTest,
+    ::testing::Values(TestFuncsFSign(av1_wedge_sign_from_residuals_c,
+                                     av1_wedge_sign_from_residuals_neon)));
+
+INSTANTIATE_TEST_SUITE_P(
+    NEON, WedgeUtilsDeltaSquaresOptTest,
+    ::testing::Values(TestFuncsFDS(av1_wedge_compute_delta_squares_c,
+                                   av1_wedge_compute_delta_squares_neon)));
 #endif  // HAVE_NEON
 
 #if HAVE_AVX2
@@ -397,5 +407,17 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(TestFuncsFDS(av1_wedge_compute_delta_squares_sse2,
                                    av1_wedge_compute_delta_squares_avx2)));
 #endif  // HAVE_AVX2
+
+#if HAVE_SVE
+INSTANTIATE_TEST_SUITE_P(
+    SVE, WedgeUtilsSSEOptTest,
+    ::testing::Values(TestFuncsFSSE(av1_wedge_sse_from_residuals_c,
+                                    av1_wedge_sse_from_residuals_sve)));
+
+INSTANTIATE_TEST_SUITE_P(
+    SVE, WedgeUtilsSignOptTest,
+    ::testing::Values(TestFuncsFSign(av1_wedge_sign_from_residuals_c,
+                                     av1_wedge_sign_from_residuals_sve)));
+#endif  // HAVE_SVE
 
 }  // namespace

@@ -94,7 +94,7 @@ double compute_aomssim(const YV12_BUFFER_CONFIG *source,
 
 class HBDMetricsTestBase {
  public:
-  virtual ~HBDMetricsTestBase() {}
+  virtual ~HBDMetricsTestBase() = default;
 
  protected:
   void RunAccuracyCheck() {
@@ -112,10 +112,10 @@ class HBDMetricsTestBase {
     memset(&hbd_src, 0, sizeof(hbd_src));
     memset(&hbd_dst, 0, sizeof(hbd_dst));
 
-    aom_alloc_frame_buffer(&lbd_src, width, height, 1, 1, 0, 32, 16, 0);
-    aom_alloc_frame_buffer(&lbd_dst, width, height, 1, 1, 0, 32, 16, 0);
-    aom_alloc_frame_buffer(&hbd_src, width, height, 1, 1, 1, 32, 16, 0);
-    aom_alloc_frame_buffer(&hbd_dst, width, height, 1, 1, 1, 32, 16, 0);
+    aom_alloc_frame_buffer(&lbd_src, width, height, 1, 1, 0, 32, 16, false, 0);
+    aom_alloc_frame_buffer(&lbd_dst, width, height, 1, 1, 0, 32, 16, false, 0);
+    aom_alloc_frame_buffer(&hbd_src, width, height, 1, 1, 1, 32, 16, false, 0);
+    aom_alloc_frame_buffer(&hbd_dst, width, height, 1, 1, 1, 32, 16, false, 0);
 
     memset(lbd_src.buffer_alloc, kPixFiller, lbd_src.buffer_alloc_sz);
     while (i < lbd_src.buffer_alloc_sz) {
@@ -179,14 +179,13 @@ typedef std::tuple<LBDMetricFunc, HBDMetricFunc, int, int, double>
 class HBDMetricsTest : public HBDMetricsTestBase,
                        public ::testing::TestWithParam<MetricTestTParam> {
  public:
-  virtual void SetUp() {
+  void SetUp() override {
     lbd_metric_ = GET_PARAM(0);
     hbd_metric_ = GET_PARAM(1);
     input_bit_depth_ = GET_PARAM(2);
     bit_depth_ = GET_PARAM(3);
     threshold_ = GET_PARAM(4);
   }
-  virtual void TearDown() {}
 };
 
 TEST_P(HBDMetricsTest, RunAccuracyCheck) { RunAccuracyCheck(); }

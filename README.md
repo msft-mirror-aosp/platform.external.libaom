@@ -46,17 +46,23 @@ README.md                {#LREADME}
 
 ### Prerequisites {#prerequisites}
 
- 1. [CMake](https://cmake.org). See CMakeLists.txt for the minimum version
-    required.
- 2. [Git](https://git-scm.com/).
- 3. [Perl](https://www.perl.org/).
- 4. For x86 targets, [yasm](http://yasm.tortall.net/), which is preferred, or a
-    recent version of [nasm](http://www.nasm.us/). If you download yasm with
-    the intention to work with Visual Studio, please download win32.exe or
-    win64.exe and rename it into yasm.exe. DO NOT download or use vsyasm.exe.
- 5. Building the documentation requires
+1. [CMake](https://cmake.org). See CMakeLists.txt for the minimum version
+   required.
+2. [Git](https://git-scm.com/).
+3. A modern C compiler. gcc 6+, clang 7+, Microsoft Visual Studio 2019+ or
+   the latest version of MinGW-w64 (clang64 or ucrt toolchains) are
+   recommended. A C++ compiler is necessary to build the unit tests and some
+   features contained in the examples.
+4. [Perl](https://www.perl.org/).
+5. For x86 targets, [yasm](http://yasm.tortall.net/) or a recent version (2.14
+   or later) of [nasm](http://www.nasm.us/). (If both yasm and nasm are
+   present, yasm will be used by default. Pass -DENABLE_NASM=ON to cmake to
+   select nasm.) If you download yasm with the intention to work with Visual
+   Studio, please download win32.exe or win64.exe and rename it into yasm.exe.
+   DO NOT download or use vsyasm.exe.
+6. Building the documentation requires
    [doxygen version 1.8.10 or newer](http://doxygen.org).
- 6. Emscripten builds require the portable
+7. Emscripten builds require the portable
    [EMSDK](https://kripken.github.io/emscripten-site/index.html).
 
 ### Get the code {#get-the-code}
@@ -159,6 +165,7 @@ cross compiling via the use of toolchain files included in the AV1 repository.
 The toolchain files available at the time of this writing are:
 
  - arm64-ios.cmake
+ - arm64-linux-clang.cmake
  - arm64-linux-gcc.cmake
  - arm64-mingw-gcc.cmake
  - armv7-ios.cmake
@@ -217,27 +224,26 @@ compiler documentation to determine which, if any, are available.
 ### Microsoft Visual Studio builds {#microsoft-visual-studio-builds}
 
 Building the AV1 codec library in Microsoft Visual Studio is supported. Visual
-Studio 2017 (15.0) or later is required. The following example demonstrates
+Studio 2019 (16.0) or later is required. The following example demonstrates
 generating projects and a solution for the Microsoft IDE:
 
 ~~~
     # This does not require a bash shell; Command Prompt (cmd.exe) is fine.
     # This assumes the build host is a Windows x64 computer.
 
-    # To build with Visual Studio 2019 for the x64 target:
+    # To create a Visual Studio 2022 solution for the x64 target:
+    $ cmake path/to/aom -G "Visual Studio 17 2022"
+
+    # To create a Visual Studio 2022 solution for the 32-bit x86 target:
+    $ cmake path/to/aom -G "Visual Studio 17 2022" -A Win32
+
+    # To create a Visual Studio 2019 solution for the x64 target:
     $ cmake path/to/aom -G "Visual Studio 16 2019"
-    $ cmake --build .
 
-    # To build with Visual Studio 2019 for the 32-bit x86 target:
+    # To create a Visual Studio 2019 solution for the 32-bit x86 target:
     $ cmake path/to/aom -G "Visual Studio 16 2019" -A Win32
-    $ cmake --build .
 
-    # To build with Visual Studio 2017 for the x64 target:
-    $ cmake path/to/aom -G "Visual Studio 15 2017" -T host=x64 -A x64
-    $ cmake --build .
-
-    # To build with Visual Studio 2017 for the 32-bit x86 target:
-    $ cmake path/to/aom -G "Visual Studio 15 2017" -T host=x64
+    # To build the solution:
     $ cmake --build .
 ~~~
 
@@ -575,11 +581,18 @@ your account (Gmail credentials, for example). Next, follow the
 `Generate Password` Password link at the top of the page. You’ll be given
 instructions for creating a cookie to use with our Git repos.
 
+You must also have a Gerrit account associated with your Google account. To do
+this visit the [Gerrit review server](https://aomedia-review.googlesource.com)
+and click "Sign in" (top right).
+
 ### Contributor agreement {#contributor-agreement}
 
 You will be required to execute a
 [contributor agreement](http://aomedia.org/license) to ensure that the AOMedia
 Project has the right to distribute your changes.
+
+Note: If you are pushing changes on behalf of an Alliance for Open Media member
+organization this step is not necessary.
 
 ### Testing your code {#testing-your-code}
 

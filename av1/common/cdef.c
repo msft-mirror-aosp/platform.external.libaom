@@ -10,16 +10,21 @@
  */
 
 #include <assert.h>
-#include <math.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "config/aom_scale_rtcd.h"
 
 #include "aom/aom_integer.h"
+#include "aom_util/aom_pthread.h"
 #include "av1/common/av1_common_int.h"
 #include "av1/common/cdef.h"
 #include "av1/common/cdef_block.h"
+#include "av1/common/common.h"
+#include "av1/common/common_data.h"
+#include "av1/common/enums.h"
 #include "av1/common/reconinter.h"
+#include "av1/common/thread_common.h"
 
 static int is_8x8_block_skip(MB_MODE_INFO **grid, int mi_row, int mi_col,
                              int mi_stride) {
@@ -91,7 +96,7 @@ void av1_cdef_copy_sb8_16_lowbd(uint16_t *const dst, int dstride,
                                 const uint8_t *src, int src_voffset,
                                 int src_hoffset, int sstride, int vsize,
                                 int hsize) {
-  const uint8_t *base = &src[src_voffset * sstride + src_hoffset];
+  const uint8_t *base = &src[src_voffset * (ptrdiff_t)sstride + src_hoffset];
   cdef_copy_rect8_8bit_to_16bit(dst, dstride, base, sstride, hsize, vsize);
 }
 
@@ -100,7 +105,7 @@ void av1_cdef_copy_sb8_16_highbd(uint16_t *const dst, int dstride,
                                  int src_hoffset, int sstride, int vsize,
                                  int hsize) {
   const uint16_t *base =
-      &CONVERT_TO_SHORTPTR(src)[src_voffset * sstride + src_hoffset];
+      &CONVERT_TO_SHORTPTR(src)[src_voffset * (ptrdiff_t)sstride + src_hoffset];
   cdef_copy_rect8_16bit_to_16bit(dst, dstride, base, sstride, hsize, vsize);
 }
 
@@ -246,7 +251,8 @@ static void cdef_prepare_fb(const AV1_COMMON *const cm, CdefBlockInfo *fb_info,
 
 static INLINE void cdef_filter_fb(CdefBlockInfo *const fb_info, int plane,
                                   uint8_t use_highbitdepth) {
-  int offset = fb_info->dst_stride * fb_info->roffset + fb_info->coffset;
+  ptrdiff_t offset =
+      (ptrdiff_t)fb_info->dst_stride * fb_info->roffset + fb_info->coffset;
   if (use_highbitdepth) {
     av1_cdef_filter_fb(
         NULL, CONVERT_TO_SHORTPTR(fb_info->dst + offset), fb_info->dst_stride,
@@ -413,12 +419,25 @@ void av1_cdef_fb_row(const AV1_COMMON *const cm, MACROBLOCKD *xd,
                      uint16_t **const linebuf, uint16_t **const colbuf,
                      uint16_t *const src, int fbr,
                      cdef_init_fb_row_t cdef_init_fb_row_fn,
-                     struct AV1CdefSyncData *const cdef_sync) {
+                     struct AV1CdefSyncData *const cdef_sync,
+                     struct aom_internal_error_info *error_info) {
+  // TODO(aomedia:3276): Pass error_info to the low-level functions as required
+  // in future to handle error propagation.
+  (void)error_info;
   CdefBlockInfo fb_info;
   int cdef_left[MAX_MB_PLANE] = { 1, 1, 1 };
   const int nhfb = (cm->mi_params.mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
 
   cdef_init_fb_row_fn(cm, xd, &fb_info, linebuf, src, cdef_sync, fbr);
+#if CONFIG_MULTITHREAD
+  if (cdef_sync && cm->cdef_info.allocated_num_workers > 1) {
+    pthread_mutex_lock(cdef_sync->mutex_);
+    const bool cdef_mt_exit = cdef_sync->cdef_mt_exit;
+    pthread_mutex_unlock(cdef_sync->mutex_);
+    // Exit in case any worker has encountered an error.
+    if (cdef_mt_exit) return;
+  }
+#endif
   for (int fbc = 0; fbc < nhfb; fbc++) {
     fb_info.frame_boundary[LEFT] = (MI_SIZE_64X64 * fbc == 0) ? 1 : 0;
     if (fbc != nhfb - 1)
@@ -447,5 +466,6 @@ void av1_cdef_frame(YV12_BUFFER_CONFIG *frame, AV1_COMMON *const cm,
 
   for (int fbr = 0; fbr < nvfb; fbr++)
     av1_cdef_fb_row(cm, xd, cm->cdef_info.linebuf, cm->cdef_info.colbuf,
-                    cm->cdef_info.srcbuf, fbr, cdef_init_fb_row_fn, NULL);
+                    cm->cdef_info.srcbuf, fbr, cdef_init_fb_row_fn, NULL,
+                    xd->error_info);
 }

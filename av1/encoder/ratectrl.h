@@ -204,6 +204,15 @@ typedef struct {
 
   int decimation_factor;
   int decimation_count;
+  int prev_frame_is_dropped;
+  int drop_count_consec;
+  int max_consec_drop;
+
+  /*!
+   * Frame number for encoded frames (non-dropped).
+   * Use for setting the rtc reference structure.
+   */
+  unsigned int frame_number_encoded;
 
   /*!\endcond */
   /*!
@@ -240,6 +249,9 @@ typedef struct {
   // signals if number of blocks with motion is high
   int percent_blocks_with_motion;
 
+  // signals percentge of 16x16 blocks that are inactive, via active_maps
+  int percent_blocks_inactive;
+
   // Maximum value of source sad across all blocks of frame.
   uint64_t max_block_source_sad;
 
@@ -261,6 +273,15 @@ typedef struct {
 
   int prev_coded_width;
   int prev_coded_height;
+
+  // The ratio used for inter frames in bit estimation.
+  // TODO(yunqing): if golden frame is treated differently (e.g. gf_cbr_boost_
+  // pct > THR), consider to add bit_est_ratio_g for golden frames.
+  int bit_est_ratio;
+
+  // Whether to use a fixed qp for the frame, bypassing internal rate control.
+  // This flag will reset to 0 after every frame.
+  int use_external_qp_one_pass;
   /*!\endcond */
 } RATE_CONTROL;
 
@@ -461,11 +482,6 @@ typedef struct {
    */
   int temp_extend_maxq;
 
-  /*!
-   * Temporary variable used in simulating the delayed update of
-   * extend_minq_fast.
-   */
-  int temp_extend_minq_fast;
 #endif
   /*!
    * Proposed minimum allowed Q different layers in a coding pyramid

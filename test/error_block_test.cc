@@ -65,14 +65,12 @@ int64_t BlockErrorLpWrapper(const tran_low_t *coeff, const tran_low_t *dqcoeff,
 
 class ErrorBlockTest : public ::testing::TestWithParam<ErrorBlockParam> {
  public:
-  virtual ~ErrorBlockTest() {}
-  virtual void SetUp() {
+  ~ErrorBlockTest() override = default;
+  void SetUp() override {
     error_block_op_ = GET_PARAM(0);
     ref_error_block_op_ = GET_PARAM(1);
     bit_depth_ = GET_PARAM(2);
   }
-
-  virtual void TearDown() {}
 
  protected:
   aom_bit_depth_t bit_depth_;
@@ -190,11 +188,10 @@ TEST_P(ErrorBlockTest, DISABLED_Speed) {
   int64_t ssz;
   int num_iters = 100000;
   int64_t ref_ssz;
-  int k;
   const int msb = bit_depth_ + 8 - 1;
   for (int i = 0; i < 9; ++i) {
     block_size = 16 << (i % 9);  // All block sizes from 4x4, 8x4 ..64x64
-    for (k = 0; k < 9; k++) {
+    for (int k = 0; k < 9; k++) {
       for (int j = 0; j < block_size; j++) {
         if (k < 5) {
           if (rnd(2)) {
@@ -221,7 +218,7 @@ TEST_P(ErrorBlockTest, DISABLED_Speed) {
       aom_usec_timer ref_timer, test_timer;
 
       aom_usec_timer_start(&ref_timer);
-      for (int i = 0; i < num_iters; ++i) {
+      for (int iter = 0; iter < num_iters; ++iter) {
         ref_error_block_op_(coeff, dqcoeff, block_size, &ref_ssz, bit_depth_);
       }
       aom_usec_timer_mark(&ref_timer);
@@ -229,7 +226,7 @@ TEST_P(ErrorBlockTest, DISABLED_Speed) {
           static_cast<int>(aom_usec_timer_elapsed(&ref_timer));
 
       aom_usec_timer_start(&test_timer);
-      for (int i = 0; i < num_iters; ++i) {
+      for (int iter = 0; iter < num_iters; ++iter) {
         error_block_op_(coeff, dqcoeff, block_size, &ssz, bit_depth_);
       }
       aom_usec_timer_mark(&test_timer);
@@ -248,7 +245,7 @@ TEST_P(ErrorBlockTest, DISABLED_Speed) {
 
 using std::make_tuple;
 
-#if (HAVE_SSE2)
+#if HAVE_SSE2
 const ErrorBlockParam kErrorBlockTestParamsSse2[] = {
 #if CONFIG_AV1_HIGHBITDEPTH
   make_tuple(&av1_highbd_block_error_sse2, &av1_highbd_block_error_c,
@@ -268,7 +265,7 @@ INSTANTIATE_TEST_SUITE_P(SSE2, ErrorBlockTest,
                          ::testing::ValuesIn(kErrorBlockTestParamsSse2));
 #endif  // HAVE_SSE2
 
-#if (HAVE_AVX2)
+#if HAVE_AVX2
 const ErrorBlockParam kErrorBlockTestParamsAvx2[] = {
 #if CONFIG_AV1_HIGHBITDEPTH
   make_tuple(&av1_highbd_block_error_avx2, &av1_highbd_block_error_c,
@@ -288,8 +285,16 @@ INSTANTIATE_TEST_SUITE_P(AVX2, ErrorBlockTest,
                          ::testing::ValuesIn(kErrorBlockTestParamsAvx2));
 #endif  // HAVE_AVX2
 
-#if (HAVE_NEON)
+#if HAVE_NEON
 const ErrorBlockParam kErrorBlockTestParamsNeon[] = {
+#if CONFIG_AV1_HIGHBITDEPTH
+  make_tuple(&av1_highbd_block_error_neon, &av1_highbd_block_error_c,
+             AOM_BITS_10),
+  make_tuple(&av1_highbd_block_error_neon, &av1_highbd_block_error_c,
+             AOM_BITS_12),
+  make_tuple(&av1_highbd_block_error_neon, &av1_highbd_block_error_c,
+             AOM_BITS_8),
+#endif
   make_tuple(&BlockError8BitWrapper<av1_block_error_neon>,
              &BlockError8BitWrapper<av1_block_error_c>, AOM_BITS_8),
   make_tuple(&BlockErrorLpWrapper<av1_block_error_lp_neon>,
@@ -299,4 +304,16 @@ const ErrorBlockParam kErrorBlockTestParamsNeon[] = {
 INSTANTIATE_TEST_SUITE_P(NEON, ErrorBlockTest,
                          ::testing::ValuesIn(kErrorBlockTestParamsNeon));
 #endif  // HAVE_NEON
+
+#if HAVE_SVE
+const ErrorBlockParam kErrorBlockTestParamsSVE[] = {
+  make_tuple(&BlockError8BitWrapper<av1_block_error_sve>,
+             &BlockError8BitWrapper<av1_block_error_c>, AOM_BITS_8),
+  make_tuple(&BlockErrorLpWrapper<av1_block_error_lp_sve>,
+             &BlockErrorLpWrapper<av1_block_error_lp_c>, AOM_BITS_8)
+};
+
+INSTANTIATE_TEST_SUITE_P(SVE, ErrorBlockTest,
+                         ::testing::ValuesIn(kErrorBlockTestParamsSVE));
+#endif  // HAVE_SVE
 }  // namespace

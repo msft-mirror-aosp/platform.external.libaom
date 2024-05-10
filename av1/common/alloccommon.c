@@ -13,6 +13,8 @@
 #include "config/aom_config.h"
 
 #include "aom_mem/aom_mem.h"
+#include "aom_scale/yv12config.h"
+#include "aom_util/aom_pthread.h"
 
 #include "av1/common/alloccommon.h"
 #include "av1/common/av1_common_int.h"
@@ -20,6 +22,8 @@
 #include "av1/common/cdef_block.h"
 #include "av1/common/entropymode.h"
 #include "av1/common/entropymv.h"
+#include "av1/common/enums.h"
+#include "av1/common/restoration.h"
 #include "av1/common/thread_common.h"
 
 int av1_get_MBs(int width, int height) {
@@ -36,7 +40,7 @@ int av1_get_MBs(int width, int height) {
 void av1_free_ref_frame_buffers(BufferPool *pool) {
   int i;
 
-  for (i = 0; i < FRAME_BUFFERS; ++i) {
+  for (i = 0; i < pool->num_frame_bufs; ++i) {
     if (pool->frame_bufs[i].ref_count > 0 &&
         pool->frame_bufs[i].raw_frame_buffer.data != NULL) {
       pool->release_fb_cb(pool->cb_priv, &pool->frame_bufs[i].raw_frame_buffer);
@@ -51,6 +55,9 @@ void av1_free_ref_frame_buffers(BufferPool *pool) {
     pool->frame_bufs[i].seg_map = NULL;
     aom_free_frame_buffer(&pool->frame_bufs[i].buf);
   }
+  aom_free(pool->frame_bufs);
+  pool->frame_bufs = NULL;
+  pool->num_frame_bufs = 0;
 }
 
 static INLINE void free_cdef_linebuf_conditional(
@@ -96,10 +103,14 @@ static INLINE void free_cdef_row_sync(AV1CdefRowSync **cdef_row_mt,
   if (*cdef_row_mt == NULL) return;
 #if CONFIG_MULTITHREAD
   for (int row_idx = 0; row_idx < num_mi_rows; row_idx++) {
-    pthread_mutex_destroy((*cdef_row_mt)[row_idx].row_mutex_);
-    pthread_cond_destroy((*cdef_row_mt)[row_idx].row_cond_);
-    aom_free((*cdef_row_mt)[row_idx].row_mutex_);
-    aom_free((*cdef_row_mt)[row_idx].row_cond_);
+    if ((*cdef_row_mt)[row_idx].row_mutex_ != NULL) {
+      pthread_mutex_destroy((*cdef_row_mt)[row_idx].row_mutex_);
+      aom_free((*cdef_row_mt)[row_idx].row_mutex_);
+    }
+    if ((*cdef_row_mt)[row_idx].row_cond_ != NULL) {
+      pthread_cond_destroy((*cdef_row_mt)[row_idx].row_cond_);
+      aom_free((*cdef_row_mt)[row_idx].row_cond_);
+    }
   }
 #else
   (void)num_mi_rows;
@@ -164,7 +175,7 @@ static INLINE void alloc_cdef_row_sync(AV1_COMMON *const cm,
   if (*cdef_row_mt != NULL) return;
 
   CHECK_MEM_ERROR(cm, *cdef_row_mt,
-                  aom_malloc(sizeof(**cdef_row_mt) * num_mi_rows));
+                  aom_calloc(num_mi_rows, sizeof(**cdef_row_mt)));
 #if CONFIG_MULTITHREAD
   for (int row_idx = 0; row_idx < num_mi_rows; row_idx++) {
     CHECK_MEM_ERROR(cm, (*cdef_row_mt)[row_idx].row_mutex_,
@@ -174,8 +185,6 @@ static INLINE void alloc_cdef_row_sync(AV1_COMMON *const cm,
     CHECK_MEM_ERROR(cm, (*cdef_row_mt)[row_idx].row_cond_,
                     aom_malloc(sizeof(*(*cdef_row_mt)[row_idx].row_cond_)));
     pthread_cond_init((*cdef_row_mt)[row_idx].row_cond_, NULL);
-
-    (*cdef_row_mt)[row_idx].is_row_done = 0;
   }
 #endif  // CONFIG_MULTITHREAD
 }
@@ -195,7 +204,7 @@ void av1_alloc_cdef_buffers(AV1_COMMON *const cm,
   const int is_num_workers_changed =
       cdef_info->allocated_num_workers != num_workers;
   const int is_cdef_enabled =
-      cm->seq_params->enable_cdef && !cm->tiles.large_scale;
+      cm->seq_params->enable_cdef && !cm->tiles.single_tile_decoding;
 
   // num-bufs=3 represents ping-pong buffers for top linebuf,
   // followed by bottom linebuf.
@@ -285,13 +294,11 @@ void av1_alloc_cdef_buffers(AV1_COMMON *const cm,
                       cdef_info->allocated_mi_rows);
 }
 
-// Assumes cm->rst_info[p].restoration_unit_size is already initialized
-void av1_alloc_restoration_buffers(AV1_COMMON *cm) {
+// Allocate buffers which are independent of restoration_unit_size
+void av1_alloc_restoration_buffers(AV1_COMMON *cm, bool is_sgr_enabled) {
   const int num_planes = av1_num_planes(cm);
-  for (int p = 0; p < num_planes; ++p)
-    av1_alloc_restoration_struct(cm, &cm->rst_info[p], p > 0);
 
-  if (cm->rst_tmpbuf == NULL) {
+  if (cm->rst_tmpbuf == NULL && is_sgr_enabled) {
     CHECK_MEM_ERROR(cm, cm->rst_tmpbuf,
                     (int32_t *)aom_memalign(16, RESTORATION_TMPBUF_SIZE));
   }
@@ -300,21 +307,13 @@ void av1_alloc_restoration_buffers(AV1_COMMON *cm) {
     CHECK_MEM_ERROR(cm, cm->rlbs, aom_malloc(sizeof(RestorationLineBuffers)));
   }
 
-  // For striped loop restoration, we divide each row of tiles into "stripes",
+  // For striped loop restoration, we divide each plane into "stripes",
   // of height 64 luma pixels but with an offset by RESTORATION_UNIT_OFFSET
   // luma pixels to match the output from CDEF. We will need to store 2 *
-  // RESTORATION_CTX_VERT lines of data for each stripe, and also need to be
-  // able to quickly answer the question "Where is the <n>'th stripe for tile
-  // row <m>?" To make that efficient, we generate the rst_last_stripe array.
-  int num_stripes = 0;
-  for (int i = 0; i < cm->tiles.rows; ++i) {
-    TileInfo tile_info;
-    av1_tile_set_row(&tile_info, cm, i);
-    const int mi_h = tile_info.mi_row_end - tile_info.mi_row_start;
-    const int ext_h = RESTORATION_UNIT_OFFSET + (mi_h << MI_SIZE_LOG2);
-    const int tile_stripes = (ext_h + 63) / 64;
-    num_stripes += tile_stripes;
-  }
+  // RESTORATION_CTX_VERT lines of data for each stripe.
+  int mi_h = cm->mi_params.mi_rows;
+  const int ext_h = RESTORATION_UNIT_OFFSET + (mi_h << MI_SIZE_LOG2);
+  const int num_stripes = (ext_h + 63) / 64;
 
   // Now we need to allocate enough space to store the line buffers for the
   // stripes
@@ -473,11 +472,11 @@ static int alloc_mi(CommonModeInfoParams *mi_params) {
     mi_params->mi_grid_base = (MB_MODE_INFO **)aom_calloc(
         mi_grid_size, sizeof(*mi_params->mi_grid_base));
     if (!mi_params->mi_grid_base) return 1;
-    mi_params->mi_grid_size = mi_grid_size;
 
     mi_params->tx_type_map =
         aom_calloc(mi_grid_size, sizeof(*mi_params->tx_type_map));
     if (!mi_params->tx_type_map) return 1;
+    mi_params->mi_grid_size = mi_grid_size;
   }
 
   return 0;

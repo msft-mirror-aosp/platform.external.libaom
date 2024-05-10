@@ -24,6 +24,9 @@
 
 #define RENAME_(x, y) AV1_K_MEANS_RENAME(x, y)
 #define RENAME(x) RENAME_(x, AV1_K_MEANS_DIM)
+#define K_MEANS_RENAME_C(x, y) x##_dim##y##_c
+#define RENAME_C_(x, y) K_MEANS_RENAME_C(x, y)
+#define RENAME_C(x) RENAME_C_(x, AV1_K_MEANS_DIM)
 
 // Though we want to compute the smallest L2 norm, in 1 dimension,
 // it is equivalent to find the smallest L1 norm and then square it.
@@ -41,8 +44,8 @@ static int RENAME(calc_dist)(const int16_t *p1, const int16_t *p2) {
 #endif
 }
 
-void RENAME(av1_calc_indices)(const int16_t *data, const int16_t *centroids,
-                              uint8_t *indices, int64_t *dist, int n, int k) {
+void RENAME_C(av1_calc_indices)(const int16_t *data, const int16_t *centroids,
+                                uint8_t *indices, int64_t *dist, int n, int k) {
   if (dist) {
     *dist = 0;
   }
@@ -123,6 +126,10 @@ void RENAME(av1_k_means)(const int16_t *data, int16_t *centroids,
     l = (l == 1) ? 0 : 1;
 
     RENAME(calc_centroids)(data, meta_centroids[l], meta_indices[prev_l], n, k);
+    if (!memcmp(meta_centroids[l], meta_centroids[prev_l],
+                sizeof(centroids[0]) * k * AV1_K_MEANS_DIM)) {
+      break;
+    }
 #if AV1_K_MEANS_DIM == 1
     av1_calc_indices_dim1(data, meta_centroids[l], meta_indices[l], &this_dist,
                           n, k);
@@ -135,9 +142,6 @@ void RENAME(av1_k_means)(const int16_t *data, int16_t *centroids,
       best_l = prev_l;
       break;
     }
-    if (!memcmp(meta_centroids[l], meta_centroids[prev_l],
-                sizeof(centroids[0]) * k * AV1_K_MEANS_DIM))
-      break;
   }
   if (i == max_itr) best_l = l;
   if (best_l != 0) {
@@ -148,3 +152,6 @@ void RENAME(av1_k_means)(const int16_t *data, int16_t *centroids,
 }
 #undef RENAME_
 #undef RENAME
+#undef K_MEANS_RENAME_C
+#undef RENAME_C_
+#undef RENAME_C

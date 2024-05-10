@@ -15,6 +15,7 @@
 #include "aom/aom_integer.h"
 #include "aom_dsp/flow_estimation/flow_estimation.h"
 #include "aom_scale/yv12config.h"
+#include "aom_util/aom_pthread.h"
 #include "aom_util/aom_thread.h"
 
 #ifdef __cplusplus
@@ -22,7 +23,7 @@ extern "C" {
 #endif
 
 #define RANSAC_NUM_MOTIONS 1
-#define GM_REFINEMENT_COUNT 5
+#define GM_MAX_REFINEMENT_STEPS 5
 #define MAX_DIRECTIONS 2
 
 // The structure holds a valid reference frame type and its temporal distance
@@ -34,13 +35,13 @@ typedef struct {
 
 typedef struct {
   // Array of structure which holds the global motion parameters for a given
-  // motion model. params_by_motion[i] holds the parameters for a given motion
+  // motion model. motion_models[i] holds the parameters for a given motion
   // model for the ith ransac motion.
-  MotionModel params_by_motion[RANSAC_NUM_MOTIONS];
+  MotionModel motion_models[RANSAC_NUM_MOTIONS];
 
   // Pointer to hold inliers from motion model.
   uint8_t *segment_map;
-} GlobalMotionThreadData;
+} GlobalMotionData;
 
 typedef struct {
   // Holds the mapping of each thread to past/future direction.
@@ -63,30 +64,33 @@ typedef struct {
   // Data related to assigning jobs for global motion multi-threading.
   JobInfo job_info;
 
-  // Data specific to each worker in global motion multi-threading.
-  // thread_data[i] stores the thread specific data for worker 'i'.
-  GlobalMotionThreadData *thread_data;
-
 #if CONFIG_MULTITHREAD
   // Mutex lock used while dispatching jobs.
   pthread_mutex_t *mutex_;
 #endif
 
-  // Width and height for which segment_map is allocated for each thread.
-  int allocated_width;
-  int allocated_height;
-
-  // Number of workers for which thread_data is allocated.
-  int8_t allocated_workers;
+  // Initialized to false, set to true by the worker thread that encounters an
+  // error in order to abort the processing of other worker threads.
+  bool gm_mt_exit;
 } AV1GlobalMotionSync;
 
 void av1_convert_model_to_params(const double *params,
                                  WarpedMotionParams *model);
 
-// TODO(sarahparker) These need to be retuned for speed 0 and 1 to
-// maximize gains from segmented error metric
+// Criteria for accepting a global motion model
 static const double erroradv_tr = 0.65;
 static const double erroradv_prod_tr = 20000;
+
+// Early exit threshold for global motion refinement
+// This is set slightly higher than erroradv_tr, as a compromise between
+// two factors:
+//
+// 1) By rejecting un-promising models early, we can reduce the encode time
+//    spent trying to refine them
+//
+// 2) When we refine a model, its error may decrease to below the acceptance
+//    threshold even if the model is initially above the threshold
+static const double erroradv_early_tr = 0.70;
 
 int av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost);
 
@@ -94,12 +98,17 @@ void av1_compute_feature_segmentation_map(uint8_t *segment_map, int width,
                                           int height, int *inliers,
                                           int num_inliers);
 
+int64_t av1_segmented_frame_error(int use_hbd, int bd, const uint8_t *ref,
+                                  int ref_stride, uint8_t *dst, int dst_stride,
+                                  int p_width, int p_height,
+                                  uint8_t *segment_map, int segment_map_stride);
+
 // Returns the error between the result of applying motion 'wm' to the frame
 // described by 'ref' and the frame described by 'dst'.
 int64_t av1_warp_error(WarpedMotionParams *wm, int use_hbd, int bd,
-                       const uint8_t *ref, int width, int height, int stride,
-                       uint8_t *dst, int p_col, int p_row, int p_width,
-                       int p_height, int p_stride, int subsampling_x,
+                       const uint8_t *ref, int ref_width, int ref_height,
+                       int ref_stride, uint8_t *dst, int dst_stride, int p_col,
+                       int p_row, int p_width, int p_height, int subsampling_x,
                        int subsampling_y, int64_t best_error,
                        uint8_t *segment_map, int segment_map_stride);
 
@@ -110,8 +119,7 @@ int64_t av1_refine_integerized_param(
     WarpedMotionParams *wm, TransformationType wmtype, int use_hbd, int bd,
     uint8_t *ref, int r_width, int r_height, int r_stride, uint8_t *dst,
     int d_width, int d_height, int d_stride, int n_refinements,
-    int64_t best_frame_error, uint8_t *segment_map, int segment_map_stride,
-    int64_t erroradv_threshold);
+    int64_t ref_frame_error, uint8_t *segment_map, int segment_map_stride);
 
 #ifdef __cplusplus
 }  // extern "C"

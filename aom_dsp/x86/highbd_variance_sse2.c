@@ -98,43 +98,6 @@ static void highbd_12_variance_sse2(const uint16_t *src, int src_stride,
   *sse = (uint32_t)ROUND_POWER_OF_TWO(sse_long, 8);
 }
 
-#define HIGH_GET_VAR(S)                                                       \
-  void aom_highbd_get##S##x##S##var_sse2(const uint8_t *src8, int src_stride, \
-                                         const uint8_t *ref8, int ref_stride, \
-                                         uint32_t *sse, int *sum) {           \
-    uint16_t *src = CONVERT_TO_SHORTPTR(src8);                                \
-    uint16_t *ref = CONVERT_TO_SHORTPTR(ref8);                                \
-    aom_highbd_calc##S##x##S##var_sse2(src, src_stride, ref, ref_stride, sse, \
-                                       sum);                                  \
-  }                                                                           \
-                                                                              \
-  void aom_highbd_10_get##S##x##S##var_sse2(                                  \
-      const uint8_t *src8, int src_stride, const uint8_t *ref8,               \
-      int ref_stride, uint32_t *sse, int *sum) {                              \
-    uint16_t *src = CONVERT_TO_SHORTPTR(src8);                                \
-    uint16_t *ref = CONVERT_TO_SHORTPTR(ref8);                                \
-    aom_highbd_calc##S##x##S##var_sse2(src, src_stride, ref, ref_stride, sse, \
-                                       sum);                                  \
-    *sum = ROUND_POWER_OF_TWO(*sum, 2);                                       \
-    *sse = ROUND_POWER_OF_TWO(*sse, 4);                                       \
-  }                                                                           \
-                                                                              \
-  void aom_highbd_12_get##S##x##S##var_sse2(                                  \
-      const uint8_t *src8, int src_stride, const uint8_t *ref8,               \
-      int ref_stride, uint32_t *sse, int *sum) {                              \
-    uint16_t *src = CONVERT_TO_SHORTPTR(src8);                                \
-    uint16_t *ref = CONVERT_TO_SHORTPTR(ref8);                                \
-    aom_highbd_calc##S##x##S##var_sse2(src, src_stride, ref, ref_stride, sse, \
-                                       sum);                                  \
-    *sum = ROUND_POWER_OF_TWO(*sum, 4);                                       \
-    *sse = ROUND_POWER_OF_TWO(*sse, 8);                                       \
-  }
-
-HIGH_GET_VAR(16)
-HIGH_GET_VAR(8)
-
-#undef HIGH_GET_VAR
-
 #define VAR_FN(w, h, block_size, shift)                                    \
   uint32_t aom_highbd_8_variance##w##x##h##_sse2(                          \
       const uint8_t *src8, int src_stride, const uint8_t *ref8,            \
@@ -674,8 +637,8 @@ void aom_highbd_dist_wtd_comp_avg_pred_sse2(
   }
 }
 
-uint64_t aom_mse_4xh_16bit_highbd_sse2(uint16_t *dst, int dstride,
-                                       uint16_t *src, int sstride, int h) {
+static uint64_t mse_4xh_16bit_highbd_sse2(uint16_t *dst, int dstride,
+                                          uint16_t *src, int sstride, int h) {
   uint64_t sum = 0;
   __m128i reg0_4x16, reg1_4x16;
   __m128i src_8x16;
@@ -719,8 +682,8 @@ uint64_t aom_mse_4xh_16bit_highbd_sse2(uint16_t *dst, int dstride,
   return sum;
 }
 
-uint64_t aom_mse_8xh_16bit_highbd_sse2(uint16_t *dst, int dstride,
-                                       uint16_t *src, int sstride, int h) {
+static uint64_t mse_8xh_16bit_highbd_sse2(uint16_t *dst, int dstride,
+                                          uint16_t *src, int sstride, int h) {
   uint64_t sum = 0;
   __m128i src_8x16;
   __m128i dst_8x16;
@@ -765,8 +728,8 @@ uint64_t aom_mse_wxh_16bit_highbd_sse2(uint16_t *dst, int dstride,
   assert((w == 8 || w == 4) && (h == 8 || h == 4) &&
          "w=8/4 and h=8/4 must satisfy");
   switch (w) {
-    case 4: return aom_mse_4xh_16bit_highbd_sse2(dst, dstride, src, sstride, h);
-    case 8: return aom_mse_8xh_16bit_highbd_sse2(dst, dstride, src, sstride, h);
+    case 4: return mse_4xh_16bit_highbd_sse2(dst, dstride, src, sstride, h);
+    case 8: return mse_8xh_16bit_highbd_sse2(dst, dstride, src, sstride, h);
     default: assert(0 && "unsupported width"); return -1;
   }
 }

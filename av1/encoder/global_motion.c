@@ -37,7 +37,6 @@ int av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost) {
 
 static void convert_to_params(const double *params, int32_t *model) {
   int i;
-  int alpha_present = 0;
   model[0] = (int32_t)floor(params[0] * (1 << GM_TRANS_PREC_BITS) + 0.5);
   model[1] = (int32_t)floor(params[1] * (1 << GM_TRANS_PREC_BITS) + 0.5);
   model[0] = (int32_t)clamp(model[0], GM_TRANS_MIN, GM_TRANS_MAX) *
@@ -50,21 +49,7 @@ static void convert_to_params(const double *params, int32_t *model) {
     model[i] = (int32_t)floor(params[i] * (1 << GM_ALPHA_PREC_BITS) + 0.5);
     model[i] =
         (int32_t)clamp(model[i] - diag_value, GM_ALPHA_MIN, GM_ALPHA_MAX);
-    alpha_present |= (model[i] != 0);
     model[i] = (model[i] + diag_value) * GM_ALPHA_DECODE_FACTOR;
-  }
-  for (; i < 8; ++i) {
-    model[i] = (int32_t)floor(params[i] * (1 << GM_ROW3HOMO_PREC_BITS) + 0.5);
-    model[i] = (int32_t)clamp(model[i], GM_ROW3HOMO_MIN, GM_ROW3HOMO_MAX) *
-               GM_ROW3HOMO_DECODE_FACTOR;
-    alpha_present |= (model[i] != 0);
-  }
-
-  if (!alpha_present) {
-    if (abs(model[0]) < MIN_TRANS_THRESH && abs(model[1]) < MIN_TRANS_THRESH) {
-      model[0] = 0;
-      model[1] = 0;
-    }
   }
 }
 
@@ -80,11 +65,10 @@ void av1_convert_model_to_params(const double *params,
 // zero-centering.
 static int32_t add_param_offset(int param_index, int32_t param_value,
                                 int32_t offset) {
-  const int scale_vals[3] = { GM_TRANS_PREC_DIFF, GM_ALPHA_PREC_DIFF,
-                              GM_ROW3HOMO_PREC_DIFF };
-  const int clamp_vals[3] = { GM_TRANS_MAX, GM_ALPHA_MAX, GM_ROW3HOMO_MAX };
-  // type of param: 0 - translation, 1 - affine, 2 - homography
-  const int param_type = (param_index < 2 ? 0 : (param_index < 6 ? 1 : 2));
+  const int scale_vals[2] = { GM_TRANS_PREC_DIFF, GM_ALPHA_PREC_DIFF };
+  const int clamp_vals[2] = { GM_TRANS_MAX, GM_ALPHA_MAX };
+  // type of param: 0 - translation, 1 - affine
+  const int param_type = (param_index < 2 ? 0 : 1);
   const int is_one_centered = (param_index == 2 || param_index == 5);
 
   // Make parameter zero-centered and offset the shift that was done to make
@@ -126,15 +110,76 @@ static void force_wmtype(WarpedMotionParams *wm, TransformationType wmtype) {
 }
 
 #if CONFIG_AV1_HIGHBITDEPTH
-static int64_t highbd_warp_error(
-    WarpedMotionParams *wm, const uint16_t *const ref, int width, int height,
-    int stride, const uint16_t *const dst, int p_col, int p_row, int p_width,
-    int p_height, int p_stride, int subsampling_x, int subsampling_y, int bd,
-    int64_t best_error, uint8_t *segment_map, int segment_map_stride) {
+static INLINE int generic_sad_highbd(const uint16_t *const ref, int ref_stride,
+                                     const uint16_t *const dst, int dst_stride,
+                                     int p_width, int p_height) {
+  // This function should only be called for patches smaller than
+  // WARP_ERROR_BLOCK x WARP_ERROR_BLOCK. This keeps the number of pixels
+  // small enough that we don't need a 64-bit accumulator
+  assert(p_width <= WARP_ERROR_BLOCK && p_height <= WARP_ERROR_BLOCK);
+
+  int sad = 0;
+  for (int i = 0; i < p_height; ++i) {
+    for (int j = 0; j < p_width; ++j) {
+      sad += abs(dst[j + i * dst_stride] - ref[j + i * ref_stride]);
+    }
+  }
+  return sad;
+}
+
+#if WARP_ERROR_BLOCK != 32
+#error "Need to change SAD call size in highbd_segmented_frame_error"
+#endif  // WARP_ERROR_BLOCK != 32
+static int64_t highbd_segmented_frame_error(
+    const uint16_t *const ref, int ref_stride, const uint16_t *const dst,
+    int dst_stride, int p_width, int p_height, int bd, uint8_t *segment_map,
+    int segment_map_stride) {
+  (void)bd;
+  int patch_w, patch_h;
+  const int error_bsize_w = AOMMIN(p_width, WARP_ERROR_BLOCK);
+  const int error_bsize_h = AOMMIN(p_height, WARP_ERROR_BLOCK);
+  int64_t sum_error = 0;
+  for (int i = 0; i < p_height; i += WARP_ERROR_BLOCK) {
+    for (int j = 0; j < p_width; j += WARP_ERROR_BLOCK) {
+      int seg_x = j >> WARP_ERROR_BLOCK_LOG;
+      int seg_y = i >> WARP_ERROR_BLOCK_LOG;
+      // Only compute the error if this block contains inliers from the motion
+      // model
+      if (!segment_map[seg_y * segment_map_stride + seg_x]) continue;
+
+      // avoid computing error into the frame padding
+      patch_w = AOMMIN(error_bsize_w, p_width - j);
+      patch_h = AOMMIN(error_bsize_h, p_height - i);
+
+      if (patch_w == WARP_ERROR_BLOCK && patch_h == WARP_ERROR_BLOCK) {
+        sum_error += aom_highbd_sad32x32(
+            CONVERT_TO_BYTEPTR(ref + j + i * ref_stride), ref_stride,
+            CONVERT_TO_BYTEPTR(dst + j + i * dst_stride), dst_stride);
+      } else {
+        sum_error += generic_sad_highbd(ref + j + i * ref_stride, ref_stride,
+                                        dst + j + i * dst_stride, dst_stride,
+                                        patch_w, patch_h);
+      }
+    }
+  }
+  return sum_error;
+}
+
+#if WARP_ERROR_BLOCK != 32
+#error "Need to change SAD call size in highbd_warp_error"
+#endif  // WARP_ERROR_BLOCK != 32
+static int64_t highbd_warp_error(WarpedMotionParams *wm,
+                                 const uint16_t *const ref, int ref_width,
+                                 int ref_height, int ref_stride,
+                                 const uint16_t *const dst, int dst_stride,
+                                 int p_col, int p_row, int p_width,
+                                 int p_height, int subsampling_x,
+                                 int subsampling_y, int bd, int64_t best_error,
+                                 uint8_t *segment_map, int segment_map_stride) {
   int64_t gm_sumerr = 0;
   const int error_bsize_w = AOMMIN(p_width, WARP_ERROR_BLOCK);
   const int error_bsize_h = AOMMIN(p_height, WARP_ERROR_BLOCK);
-  uint16_t tmp[WARP_ERROR_BLOCK * WARP_ERROR_BLOCK];
+  DECLARE_ALIGNED(32, uint16_t, tmp[WARP_ERROR_BLOCK * WARP_ERROR_BLOCK]);
 
   ConvolveParams conv_params = get_conv_params(0, 0, bd);
   conv_params.use_dist_wtd_comp_avg = 0;
@@ -147,14 +192,22 @@ static int64_t highbd_warp_error(
       if (!segment_map[seg_y * segment_map_stride + seg_x]) continue;
       // avoid warping extra 8x8 blocks in the padded region of the frame
       // when p_width and p_height are not multiples of WARP_ERROR_BLOCK
-      const int warp_w = AOMMIN(error_bsize_w, p_col + p_width - j);
-      const int warp_h = AOMMIN(error_bsize_h, p_row + p_height - i);
-      highbd_warp_plane(wm, ref, width, height, stride, tmp, j, i, warp_w,
-                        warp_h, WARP_ERROR_BLOCK, subsampling_x, subsampling_y,
-                        bd, &conv_params);
-      gm_sumerr += av1_calc_highbd_frame_error(tmp, WARP_ERROR_BLOCK,
-                                               dst + j + i * p_stride, warp_w,
-                                               warp_h, p_stride, bd);
+      const int warp_w = AOMMIN(error_bsize_w, p_col + ref_width - j);
+      const int warp_h = AOMMIN(error_bsize_h, p_row + ref_height - i);
+      highbd_warp_plane(wm, ref, ref_width, ref_height, ref_stride, tmp, j, i,
+                        warp_w, warp_h, WARP_ERROR_BLOCK, subsampling_x,
+                        subsampling_y, bd, &conv_params);
+
+      if (warp_w == WARP_ERROR_BLOCK && warp_h == WARP_ERROR_BLOCK) {
+        gm_sumerr += aom_highbd_sad32x32(
+            CONVERT_TO_BYTEPTR(tmp), WARP_ERROR_BLOCK,
+            CONVERT_TO_BYTEPTR(dst + j + i * dst_stride), dst_stride);
+      } else {
+        gm_sumerr +=
+            generic_sad_highbd(tmp, WARP_ERROR_BLOCK, dst + j + i * dst_stride,
+                               dst_stride, warp_w, warp_h);
+      }
+
       if (gm_sumerr > best_error) return INT64_MAX;
     }
   }
@@ -162,10 +215,67 @@ static int64_t highbd_warp_error(
 }
 #endif
 
+static INLINE int generic_sad(const uint8_t *const ref, int ref_stride,
+                              const uint8_t *const dst, int dst_stride,
+                              int p_width, int p_height) {
+  // This function should only be called for patches smaller than
+  // WARP_ERROR_BLOCK x WARP_ERROR_BLOCK. This keeps the number of pixels
+  // small enough that we don't need a 64-bit accumulator
+  assert(p_width <= WARP_ERROR_BLOCK && p_height <= WARP_ERROR_BLOCK);
+
+  int sad = 0;
+  for (int i = 0; i < p_height; ++i) {
+    for (int j = 0; j < p_width; ++j) {
+      sad += abs(dst[j + i * dst_stride] - ref[j + i * ref_stride]);
+    }
+  }
+  return sad;
+}
+
+#if WARP_ERROR_BLOCK != 32
+#error "Need to change SAD call size in segmented_warp_error"
+#endif  // WARP_ERROR_BLOCK != 32
+static int64_t segmented_frame_error(const uint8_t *const ref, int ref_stride,
+                                     const uint8_t *const dst, int dst_stride,
+                                     int p_width, int p_height,
+                                     uint8_t *segment_map,
+                                     int segment_map_stride) {
+  int patch_w, patch_h;
+  const int error_bsize_w = AOMMIN(p_width, WARP_ERROR_BLOCK);
+  const int error_bsize_h = AOMMIN(p_height, WARP_ERROR_BLOCK);
+  int64_t sum_error = 0;
+  for (int i = 0; i < p_height; i += WARP_ERROR_BLOCK) {
+    for (int j = 0; j < p_width; j += WARP_ERROR_BLOCK) {
+      int seg_x = j >> WARP_ERROR_BLOCK_LOG;
+      int seg_y = i >> WARP_ERROR_BLOCK_LOG;
+      // Only compute the error if this block contains inliers from the motion
+      // model
+      if (!segment_map[seg_y * segment_map_stride + seg_x]) continue;
+
+      // avoid computing error into the frame padding
+      patch_w = AOMMIN(error_bsize_w, p_width - j);
+      patch_h = AOMMIN(error_bsize_h, p_height - i);
+
+      if (patch_w == WARP_ERROR_BLOCK && patch_h == WARP_ERROR_BLOCK) {
+        sum_error += aom_sad32x32(ref + j + i * ref_stride, ref_stride,
+                                  dst + j + i * dst_stride, dst_stride);
+      } else {
+        sum_error +=
+            generic_sad(ref + j + i * ref_stride, ref_stride,
+                        dst + j + i * dst_stride, dst_stride, patch_w, patch_h);
+      }
+    }
+  }
+  return sum_error;
+}
+
+#if WARP_ERROR_BLOCK != 32
+#error "Need to change SAD call size in warp_error"
+#endif  // WARP_ERROR_BLOCK != 32
 static int64_t warp_error(WarpedMotionParams *wm, const uint8_t *const ref,
-                          int width, int height, int stride,
-                          const uint8_t *const dst, int p_col, int p_row,
-                          int p_width, int p_height, int p_stride,
+                          int ref_width, int ref_height, int ref_stride,
+                          const uint8_t *const dst, int dst_stride, int p_col,
+                          int p_row, int p_width, int p_height,
                           int subsampling_x, int subsampling_y,
                           int64_t best_error, uint8_t *segment_map,
                           int segment_map_stride) {
@@ -186,61 +296,72 @@ static int64_t warp_error(WarpedMotionParams *wm, const uint8_t *const ref,
       if (!segment_map[seg_y * segment_map_stride + seg_x]) continue;
       // avoid warping extra 8x8 blocks in the padded region of the frame
       // when p_width and p_height are not multiples of WARP_ERROR_BLOCK
-      warp_w = AOMMIN(error_bsize_w, p_col + p_width - j);
-      warp_h = AOMMIN(error_bsize_h, p_row + p_height - i);
-      warp_plane(wm, ref, width, height, stride, tmp, j, i, warp_w, warp_h,
-                 WARP_ERROR_BLOCK, subsampling_x, subsampling_y, &conv_params);
+      warp_w = AOMMIN(error_bsize_w, p_col + ref_width - j);
+      warp_h = AOMMIN(error_bsize_h, p_row + ref_height - i);
+      warp_plane(wm, ref, ref_width, ref_height, ref_stride, tmp, j, i, warp_w,
+                 warp_h, WARP_ERROR_BLOCK, subsampling_x, subsampling_y,
+                 &conv_params);
 
-      gm_sumerr +=
-          av1_calc_frame_error(tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride,
-                               warp_w, warp_h, p_stride);
+      if (warp_w == WARP_ERROR_BLOCK && warp_h == WARP_ERROR_BLOCK) {
+        gm_sumerr += aom_sad32x32(tmp, WARP_ERROR_BLOCK,
+                                  dst + j + i * dst_stride, dst_stride);
+      } else {
+        gm_sumerr +=
+            generic_sad(tmp, WARP_ERROR_BLOCK, dst + j + i * dst_stride,
+                        dst_stride, warp_w, warp_h);
+      }
+
       if (gm_sumerr > best_error) return INT64_MAX;
     }
   }
   return gm_sumerr;
 }
 
-int64_t av1_warp_error(WarpedMotionParams *wm, int use_hbd, int bd,
-                       const uint8_t *ref, int width, int height, int stride,
-                       uint8_t *dst, int p_col, int p_row, int p_width,
-                       int p_height, int p_stride, int subsampling_x,
-                       int subsampling_y, int64_t best_error,
-                       uint8_t *segment_map, int segment_map_stride) {
-  if (wm->wmtype <= AFFINE)
-    if (!av1_get_shear_params(wm)) return INT64_MAX;
+int64_t av1_segmented_frame_error(int use_hbd, int bd, const uint8_t *ref,
+                                  int ref_stride, uint8_t *dst, int dst_stride,
+                                  int p_width, int p_height,
+                                  uint8_t *segment_map,
+                                  int segment_map_stride) {
 #if CONFIG_AV1_HIGHBITDEPTH
-  if (use_hbd)
-    return highbd_warp_error(wm, CONVERT_TO_SHORTPTR(ref), width, height,
-                             stride, CONVERT_TO_SHORTPTR(dst), p_col, p_row,
-                             p_width, p_height, p_stride, subsampling_x,
-                             subsampling_y, bd, best_error, segment_map,
-                             segment_map_stride);
+  if (use_hbd) {
+    return highbd_segmented_frame_error(
+        CONVERT_TO_SHORTPTR(ref), ref_stride, CONVERT_TO_SHORTPTR(dst),
+        dst_stride, p_width, p_height, bd, segment_map, segment_map_stride);
+  }
 #endif
   (void)use_hbd;
   (void)bd;
-  return warp_error(wm, ref, width, height, stride, dst, p_col, p_row, p_width,
-                    p_height, p_stride, subsampling_x, subsampling_y,
-                    best_error, segment_map, segment_map_stride);
+  return segmented_frame_error(ref, ref_stride, dst, dst_stride, p_width,
+                               p_height, segment_map, segment_map_stride);
 }
 
-// Factors used to calculate the thresholds for av1_warp_error
-static double thresh_factors[GM_REFINEMENT_COUNT] = { 1.25, 1.20, 1.15, 1.10,
-                                                      1.05 };
-
-static INLINE int64_t calc_approx_erroradv_threshold(
-    double scaling_factor, int64_t erroradv_threshold) {
-  return erroradv_threshold <
-                 (int64_t)(((double)INT64_MAX / scaling_factor) + 0.5)
-             ? (int64_t)(scaling_factor * erroradv_threshold + 0.5)
-             : INT64_MAX;
+int64_t av1_warp_error(WarpedMotionParams *wm, int use_hbd, int bd,
+                       const uint8_t *ref, int ref_width, int ref_height,
+                       int ref_stride, uint8_t *dst, int dst_stride, int p_col,
+                       int p_row, int p_width, int p_height, int subsampling_x,
+                       int subsampling_y, int64_t best_error,
+                       uint8_t *segment_map, int segment_map_stride) {
+  if (!av1_get_shear_params(wm)) return INT64_MAX;
+#if CONFIG_AV1_HIGHBITDEPTH
+  if (use_hbd)
+    return highbd_warp_error(wm, CONVERT_TO_SHORTPTR(ref), ref_width,
+                             ref_height, ref_stride, CONVERT_TO_SHORTPTR(dst),
+                             dst_stride, p_col, p_row, p_width, p_height,
+                             subsampling_x, subsampling_y, bd, best_error,
+                             segment_map, segment_map_stride);
+#endif
+  (void)use_hbd;
+  (void)bd;
+  return warp_error(wm, ref, ref_width, ref_height, ref_stride, dst, dst_stride,
+                    p_col, p_row, p_width, p_height, subsampling_x,
+                    subsampling_y, best_error, segment_map, segment_map_stride);
 }
 
 int64_t av1_refine_integerized_param(
     WarpedMotionParams *wm, TransformationType wmtype, int use_hbd, int bd,
     uint8_t *ref, int r_width, int r_height, int r_stride, uint8_t *dst,
     int d_width, int d_height, int d_stride, int n_refinements,
-    int64_t best_frame_error, uint8_t *segment_map, int segment_map_stride,
-    int64_t erroradv_threshold) {
+    int64_t ref_frame_error, uint8_t *segment_map, int segment_map_stride) {
   static const int max_trans_model_params[TRANS_TYPES] = { 0, 2, 4, 6 };
   const int border = ERRORADV_BORDER;
   int i = 0, p;
@@ -253,30 +374,51 @@ int64_t av1_refine_integerized_param(
   int32_t best_param;
 
   force_wmtype(wm, wmtype);
+  wm->wmtype = get_wmtype(wm);
+
+  if (n_refinements == 0) {
+    // Compute the maximum error value that will be accepted, so that
+    // av1_warp_error can terminate early if it proves the model will not
+    // be accepted.
+    int64_t selection_threshold = (int64_t)lrint(ref_frame_error * erroradv_tr);
+    return av1_warp_error(wm, use_hbd, bd, ref, r_width, r_height, r_stride,
+                          dst + border * d_stride + border, d_stride, border,
+                          border, d_width - 2 * border, d_height - 2 * border,
+                          0, 0, selection_threshold, segment_map,
+                          segment_map_stride);
+  }
+
+  // When refining, use a slightly higher threshold for the initial error
+  // calculation - see comment above erroradv_early_tr for why.
+  int64_t selection_threshold =
+      (int64_t)lrint(ref_frame_error * erroradv_early_tr);
   best_error =
       av1_warp_error(wm, use_hbd, bd, ref, r_width, r_height, r_stride,
-                     dst + border * d_stride + border, border, border,
-                     d_width - 2 * border, d_height - 2 * border, d_stride, 0,
-                     0, best_frame_error, segment_map, segment_map_stride);
-  best_error = AOMMIN(best_error, best_frame_error);
+                     dst + border * d_stride + border, d_stride, border, border,
+                     d_width - 2 * border, d_height - 2 * border, 0, 0,
+                     selection_threshold, segment_map, segment_map_stride);
+
+  if (best_error > selection_threshold) {
+    return INT64_MAX;
+  }
+
   step = 1 << (n_refinements - 1);
   for (i = 0; i < n_refinements; i++, step >>= 1) {
-    int64_t error_adv_thresh =
-        calc_approx_erroradv_threshold(thresh_factors[i], erroradv_threshold);
     for (p = 0; p < n_params; ++p) {
       int step_dir = 0;
-      // Skip searches for parameters that are forced to be 0
       param = param_mat + p;
       curr_param = *param;
       best_param = curr_param;
       // look to the left
+      // Note: We have to use force_wmtype() to keep the proper symmetry for
+      // ROTZOOM type models
       *param = add_param_offset(p, curr_param, -step);
+      force_wmtype(wm, wmtype);
       step_error =
           av1_warp_error(wm, use_hbd, bd, ref, r_width, r_height, r_stride,
-                         dst + border * d_stride + border, border, border,
-                         d_width - 2 * border, d_height - 2 * border, d_stride,
-                         0, 0, AOMMIN(best_error, error_adv_thresh),
-                         segment_map, segment_map_stride);
+                         dst + border * d_stride + border, d_stride, border,
+                         border, d_width - 2 * border, d_height - 2 * border, 0,
+                         0, best_error, segment_map, segment_map_stride);
       if (step_error < best_error) {
         best_error = step_error;
         best_param = *param;
@@ -285,46 +427,53 @@ int64_t av1_refine_integerized_param(
 
       // look to the right
       *param = add_param_offset(p, curr_param, step);
+      force_wmtype(wm, wmtype);
       step_error =
           av1_warp_error(wm, use_hbd, bd, ref, r_width, r_height, r_stride,
-                         dst + border * d_stride + border, border, border,
-                         d_width - 2 * border, d_height - 2 * border, d_stride,
-                         0, 0, AOMMIN(best_error, error_adv_thresh),
-                         segment_map, segment_map_stride);
+                         dst + border * d_stride + border, d_stride, border,
+                         border, d_width - 2 * border, d_height - 2 * border, 0,
+                         0, best_error, segment_map, segment_map_stride);
       if (step_error < best_error) {
         best_error = step_error;
         best_param = *param;
         step_dir = 1;
       }
-      *param = best_param;
 
       // look to the direction chosen above repeatedly until error increases
       // for the biggest step size
       while (step_dir) {
         *param = add_param_offset(p, best_param, step * step_dir);
+        force_wmtype(wm, wmtype);
         step_error =
             av1_warp_error(wm, use_hbd, bd, ref, r_width, r_height, r_stride,
-                           dst + border * d_stride + border, border, border,
-                           d_width - 2 * border, d_height - 2 * border,
-                           d_stride, 0, 0, AOMMIN(best_error, error_adv_thresh),
-                           segment_map, segment_map_stride);
+                           dst + border * d_stride + border, d_stride, border,
+                           border, d_width - 2 * border, d_height - 2 * border,
+                           0, 0, best_error, segment_map, segment_map_stride);
         if (step_error < best_error) {
           best_error = step_error;
           best_param = *param;
         } else {
-          *param = best_param;
           step_dir = 0;
         }
       }
+
+      // Restore best parameter value so far
+      *param = best_param;
+      force_wmtype(wm, wmtype);
     }
   }
-  force_wmtype(wm, wmtype);
+
   wm->wmtype = get_wmtype(wm);
+  // Recompute shear params for the refined model
+  // This should never fail, because we only ever consider warp-able models
+  if (!av1_get_shear_params(wm)) {
+    assert(0);
+  }
   return best_error;
 }
 
 #define FEAT_COUNT_TR 3
-#define SEG_COUNT_TR 0.40
+#define SEG_COUNT_TR 48
 void av1_compute_feature_segmentation_map(uint8_t *segment_map, int width,
                                           int height, int *inliers,
                                           int num_inliers) {
@@ -349,6 +498,6 @@ void av1_compute_feature_segmentation_map(uint8_t *segment_map, int width,
 
   // If this motion does not make up a large enough portion of the frame,
   // use the unsegmented version of the error metric
-  if (seg_count < (width * height * SEG_COUNT_TR))
+  if (seg_count < SEG_COUNT_TR)
     memset(segment_map, 1, width * height * sizeof(*segment_map));
 }
