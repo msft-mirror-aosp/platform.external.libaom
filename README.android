@@ -46,3 +46,6 @@ Tools needed to build libaom:
 
 Generate config files that contain the source list for each platform.
 A list of prerequisites is at the top of generate_config.sh.
+
+Cherry-picks:
+f1b43b5c0d {,highbd_}intrapred_neon.c: Avoid over-reads in z1 and z3 preds
