@@ -188,8 +188,7 @@ int av1_rc_bits_per_mb(const AV1_COMP *cpi, FRAME_TYPE frame_type, int qindex,
          correction_factor >= MIN_BPB_FACTOR);
 
   if (cpi->oxcf.rc_cfg.mode == AOM_CBR && frame_type != KEY_FRAME &&
-      accurate_estimate) {
-    assert(cpi->rec_sse != UINT64_MAX);
+      accurate_estimate && cpi->rec_sse != UINT64_MAX) {
     const int mbs = cm->mi_params.MBs;
     const double sse_sqrt =
         (double)((int)sqrt((double)(cpi->rec_sse)) << BPER_MB_NORMBITS) /
@@ -405,10 +404,10 @@ void av1_primary_rc_init(const AV1EncoderConfig *oxcf,
   p_rc->rate_correction_factors[KF_STD] = 1.0;
   p_rc->bits_off_target = p_rc->starting_buffer_level;
 
-  p_rc->rolling_target_bits =
-      (int)(oxcf->rc_cfg.target_bandwidth / oxcf->input_cfg.init_framerate);
-  p_rc->rolling_actual_bits =
-      (int)(oxcf->rc_cfg.target_bandwidth / oxcf->input_cfg.init_framerate);
+  p_rc->rolling_target_bits = AOMMAX(
+      1, (int)(oxcf->rc_cfg.target_bandwidth / oxcf->input_cfg.init_framerate));
+  p_rc->rolling_actual_bits = AOMMAX(
+      1, (int)(oxcf->rc_cfg.target_bandwidth / oxcf->input_cfg.init_framerate));
 }
 
 void av1_rc_init(const AV1EncoderConfig *oxcf, RATE_CONTROL *rc) {
@@ -2085,6 +2084,13 @@ static void rc_compute_variance_onepass_rt(AV1_COMP *cpi) {
 
   // TODO(yunqing): support scaled reference frames.
   if (cpi->scaled_ref_buf[LAST_FRAME - 1]) return;
+
+  for (int i = 0; i < 2; ++i) {
+    if (unscaled_src->widths[i] != yv12->widths[i] ||
+        unscaled_src->heights[i] != yv12->heights[i]) {
+      return;
+    }
+  }
 
   const int num_mi_cols = cm->mi_params.mi_cols;
   const int num_mi_rows = cm->mi_params.mi_rows;

@@ -999,10 +999,9 @@ static INLINE int detect_gf_cut(AV1_COMP *cpi, int frame_index, int cur_start,
                                 GF_GROUP_STATS *gf_stats) {
   RATE_CONTROL *const rc = &cpi->rc;
   TWO_PASS *const twopass = &cpi->ppi->twopass;
-  InitialDimensions *const initial_dimensions = &cpi->initial_dimensions;
+  AV1_COMMON *const cm = &cpi->common;
   // Motion breakout threshold for loop below depends on image size.
-  const double mv_ratio_accumulator_thresh =
-      (initial_dimensions->height + initial_dimensions->width) / 4.0;
+  const double mv_ratio_accumulator_thresh = (cm->height + cm->width) / 4.0;
 
   if (!flash_detected) {
     // Break clause to detect very still sections after motion. For example,
@@ -4229,7 +4228,8 @@ void av1_twopass_postencode_update(AV1_COMP *cpi) {
   twopass->kf_group_bits = AOMMAX(twopass->kf_group_bits, 0);
 
   // If the rate control is drifting consider adjustment to min or maxq.
-  if ((rc_cfg->mode != AOM_Q) && !cpi->rc.is_src_frame_alt_ref) {
+  if ((rc_cfg->mode != AOM_Q) && !cpi->rc.is_src_frame_alt_ref &&
+      (p_rc->rolling_target_bits > 0)) {
     int minq_adj_limit;
     int maxq_adj_limit;
     minq_adj_limit =

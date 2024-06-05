@@ -24,6 +24,10 @@ die() {
   exit 1
 }
 
+cleanup() {
+  git remote remove $REMOTE 2>/dev/null
+}
+
 # Location for the remote git repository.
 GIT_REPO="https://aomedia.googlesource.com/aom"
 
@@ -46,6 +50,8 @@ echo "prev_hash:$prev_hash"
 
 REMOTE="update_upstream"
 
+trap cleanup EXIT
+
 # Add a remote for upstream git repository
 git remote add $REMOTE $GIT_REPO
 
@@ -64,21 +70,26 @@ fi
 [ -z "$UPSTREAM_COMMIT" ] \
   && die "Unable to get upstream commit corresponding to ${GIT_BRANCH}";
 
-git merge $UPSTREAM_COMMIT
+# Defer the commit until after updating METADATA & README.android.
+git merge --no-commit $UPSTREAM_COMMIT
 
 # Get the current commit hash.
 hash=$(git log $UPSTREAM_COMMIT -1 --format="%H")
 
-# README reminder.
-echo "Update README.android:"
-echo "==============="
-echo "Date: $(date +"%A %B %d %Y")"
-echo "Branch: $GIT_BRANCH"
-echo "Commit: $hash"
-echo "==============="
-echo ""
+# Update date and commit info in METADATA & README.android.
+sed -E -i'' \
+  -e "s/^([[:space:]]+year:).*/\1 $(date +'%Y')/" \
+  -e "s/^([[:space:]]+month:).*/\1 $(date +'%-m')/" \
+  -e "s/^([[:space:]]+day:).*/\1 $(date +'%-d')/" \
+  METADATA
+sed -E -i'' \
+  -e "s/^(Date:).*/\1 $(date +'%A %B %d %Y')/" \
+  -e "s/^(Branch:).*/\1 $GIT_BRANCH/" \
+  -e "s/^(Commit:).*/\1 $hash/" \
+  README.android
 
-# Remove the remote added earlier
-git remote remove $REMOTE
+git commit -a -v
+
+echo "Update the version field in README.android and METADATA."
 
 chmod 755 build/cmake/*.pl
