@@ -1,12 +1,12 @@
 Name: libaom
 URL: https://aomedia.org
-Version: v3.9.0
+Version: v3.9.1
 License: BSD
 License File: libaom/LICENSE
 
-Date: Thursday April 25 2024
-Branch: v3.9.0
-Commit: 6cab58c3925e0f4138e15a4ed510161ea83b6db1
+Date: Monday June 10 2024
+Branch: v3.9.1
+Commit: 8ad484f8a18ed1853c094e7d3a4e023b2a92df28
 
 Description:
 Contains the sources used to compile libaom.
@@ -46,6 +46,3 @@ Tools needed to build libaom:
 
 Generate config files that contain the source list for each platform.
 A list of prerequisites is at the top of generate_config.sh.
-
-Cherry-picks:
-f1b43b5c0d {,highbd_}intrapred_neon.c: Avoid over-reads in z1 and z3 preds
