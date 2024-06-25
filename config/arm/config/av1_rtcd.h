@@ -256,8 +256,7 @@ void av1_dr_prediction_z1_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, c
 #define av1_dr_prediction_z1 av1_dr_prediction_z1_neon
 
 void av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int upsample_left, int dx, int dy);
-void av1_dr_prediction_z2_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int upsample_left, int dx, int dy);
-#define av1_dr_prediction_z2 av1_dr_prediction_z2_neon
+#define av1_dr_prediction_z2 av1_dr_prediction_z2_c
 
 void av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_left, int dx, int dy);
 void av1_dr_prediction_z3_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_left, int dx, int dy);
@@ -442,8 +441,7 @@ void av1_highbd_dr_prediction_z1_neon(uint16_t *dst, ptrdiff_t stride, int bw, i
 #define av1_highbd_dr_prediction_z1 av1_highbd_dr_prediction_z1_neon
 
 void av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd);
-void av1_highbd_dr_prediction_z2_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd);
-#define av1_highbd_dr_prediction_z2 av1_highbd_dr_prediction_z2_neon
+#define av1_highbd_dr_prediction_z2 av1_highbd_dr_prediction_z2_c
 
 void av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
 void av1_highbd_dr_prediction_z3_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
