@@ -263,8 +263,7 @@ void av1_dr_prediction_z3_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, c
 #define av1_dr_prediction_z3 av1_dr_prediction_z3_neon
 
 double av1_estimate_noise_from_single_plane_c(const uint8_t *src, int height, int width, int stride, int edge_thresh);
-double av1_estimate_noise_from_single_plane_neon(const uint8_t *src, int height, int width, int stride, int edge_thresh);
-#define av1_estimate_noise_from_single_plane av1_estimate_noise_from_single_plane_neon
+#define av1_estimate_noise_from_single_plane av1_estimate_noise_from_single_plane_c
 
 void av1_filter_intra_edge_c(uint8_t *p, int sz, int strength);
 void av1_filter_intra_edge_neon(uint8_t *p, int sz, int strength);
