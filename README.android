@@ -8,6 +8,9 @@ Date: Monday June 10 2024
 Branch: v3.9.1
 Commit: 8ad484f8a18ed1853c094e7d3a4e023b2a92df28
 
+Cherry-picks:
+53839ab1a3 disable av1_{highbd_,}dr_prediction_z2_neon w/armv7
+
 Description:
 Contains the sources used to compile libaom.
 
