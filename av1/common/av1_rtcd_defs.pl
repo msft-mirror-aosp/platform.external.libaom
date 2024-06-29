@@ -115,13 +115,23 @@ specialize qw/av1_wiener_convolve_add_src sse2 avx2 neon/;
 add_proto qw/void av1_dr_prediction_z1/, "uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int dx, int dy";
 specialize qw/av1_dr_prediction_z1 sse4_1 avx2 neon/;
 add_proto qw/void av1_dr_prediction_z2/, "uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int upsample_left, int dx, int dy";
-specialize qw/av1_dr_prediction_z2 sse4_1 avx2 neon/;
+# TODO(aomedia:349428506): enable NEON for armv7 after SIGBUS is fixed.
+if (aom_config("AOM_ARCH_ARM") eq "yes" && aom_config("AOM_ARCH_AARCH64") eq "") {
+  specialize qw/av1_dr_prediction_z2 sse4_1 avx2/;
+} else {
+  specialize qw/av1_dr_prediction_z2 sse4_1 avx2 neon/;
+}
 add_proto qw/void av1_dr_prediction_z3/, "uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_left, int dx, int dy";
 specialize qw/av1_dr_prediction_z3 sse4_1 avx2 neon/;
 
 # FILTER_INTRA predictor functions
 add_proto qw/void av1_filter_intra_predictor/, "uint8_t *dst, ptrdiff_t stride, TX_SIZE tx_size, const uint8_t *above, const uint8_t *left, int mode";
-specialize qw/av1_filter_intra_predictor sse4_1 neon/;
+# TODO(aomedia:349436249): enable NEON for armv7 after SIGBUS is fixed.
+if (aom_config("AOM_ARCH_ARM") eq "yes" && aom_config("AOM_ARCH_AARCH64") eq "") {
+  specialize qw/av1_filter_intra_predictor sse4_1/;
+} else {
+  specialize qw/av1_filter_intra_predictor sse4_1 neon/;
+}
 
 # High bitdepth functions
 
@@ -257,7 +267,12 @@ if (aom_config("CONFIG_AV1_HIGHBITDEPTH") eq "yes") {
   add_proto qw/void av1_highbd_dr_prediction_z1/, "uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int dx, int dy, int bd";
   specialize qw/av1_highbd_dr_prediction_z1 avx2 neon/;
   add_proto qw/void av1_highbd_dr_prediction_z2/, "uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd";
-  specialize qw/av1_highbd_dr_prediction_z2 avx2 neon/;
+  # TODO(aomedia:349428506): enable NEON for armv7 after SIGBUS is fixed.
+  if (aom_config("AOM_ARCH_ARM") eq "yes" && aom_config("AOM_ARCH_AARCH64") eq "") {
+    specialize qw/av1_highbd_dr_prediction_z2 avx2/;
+  } else {
+    specialize qw/av1_highbd_dr_prediction_z2 avx2 neon/;
+  }
   add_proto qw/void av1_highbd_dr_prediction_z3/, "uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd";
   specialize qw/av1_highbd_dr_prediction_z3 avx2 neon/;
 }
@@ -408,7 +423,12 @@ if (aom_config("CONFIG_AV1_ENCODER") eq "yes") {
     specialize qw/av1_apply_temporal_filter sse2 avx2 neon neon_dotprod/;
 
     add_proto qw/double av1_estimate_noise_from_single_plane/, "const uint8_t *src, int height, int width, int stride, int edge_thresh";
-    specialize qw/av1_estimate_noise_from_single_plane avx2 neon/;
+    # TODO(aomedia:349450845): enable NEON for armv7 after SIGBUS is fixed.
+    if (aom_config("AOM_ARCH_ARM") eq "yes" && aom_config("AOM_ARCH_AARCH64") eq "") {
+      specialize qw/av1_estimate_noise_from_single_plane avx2/;
+    } else {
+      specialize qw/av1_estimate_noise_from_single_plane avx2 neon/;
+    }
     if (aom_config("CONFIG_AV1_HIGHBITDEPTH") eq "yes") {
       add_proto qw/void av1_highbd_apply_temporal_filter/, "const struct yv12_buffer_config *frame_to_filter, const struct macroblockd *mbd, const BLOCK_SIZE block_size, const int mb_row, const int mb_col, const int num_planes, const double *noise_levels, const MV *subblock_mvs, const int *subblock_mses, const int q_factor, const int filter_strength, int tf_wgt_calc_lvl, const uint8_t *pred, uint32_t *accum, uint16_t *count";
       specialize qw/av1_highbd_apply_temporal_filter sse2 avx2 neon/;
@@ -551,7 +571,12 @@ if ($opts{config} !~ /libs-x86-win32-vs.*/) {
 # WARPED_MOTION / GLOBAL_MOTION functions
 if (aom_config("CONFIG_AV1_HIGHBITDEPTH") eq "yes") {
   add_proto qw/void av1_highbd_warp_affine/, "const int32_t *mat, const uint16_t *ref, int width, int height, int stride, uint16_t *pred, int p_col, int p_row, int p_width, int p_height, int p_stride, int subsampling_x, int subsampling_y, int bd, ConvolveParams *conv_params, int16_t alpha, int16_t beta, int16_t gamma, int16_t delta";
-  specialize qw/av1_highbd_warp_affine sse4_1 avx2 neon sve/;
+  # TODO(aomedia:349450845): enable NEON for armv7 after SIGBUS is fixed.
+  if (aom_config("AOM_ARCH_ARM") eq "yes" && aom_config("AOM_ARCH_AARCH64") eq "") {
+    specialize qw/av1_highbd_warp_affine sse4_1 avx2 sve/;
+  } else {
+    specialize qw/av1_highbd_warp_affine sse4_1 avx2 neon sve/;
+  }
 }
 
 add_proto qw/void av1_warp_affine/, "const int32_t *mat, const uint8_t *ref, int width, int height, int stride, uint8_t *pred, int p_col, int p_row, int p_width, int p_height, int p_stride, int subsampling_x, int subsampling_y, ConvolveParams *conv_params, int16_t alpha, int16_t beta, int16_t gamma, int16_t delta";

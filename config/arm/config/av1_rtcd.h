@@ -256,24 +256,21 @@ void av1_dr_prediction_z1_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, c
 #define av1_dr_prediction_z1 av1_dr_prediction_z1_neon
 
 void av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int upsample_left, int dx, int dy);
-void av1_dr_prediction_z2_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int upsample_left, int dx, int dy);
-#define av1_dr_prediction_z2 av1_dr_prediction_z2_neon
+#define av1_dr_prediction_z2 av1_dr_prediction_z2_c
 
 void av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_left, int dx, int dy);
 void av1_dr_prediction_z3_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_left, int dx, int dy);
 #define av1_dr_prediction_z3 av1_dr_prediction_z3_neon
 
 double av1_estimate_noise_from_single_plane_c(const uint8_t *src, int height, int width, int stride, int edge_thresh);
-double av1_estimate_noise_from_single_plane_neon(const uint8_t *src, int height, int width, int stride, int edge_thresh);
-#define av1_estimate_noise_from_single_plane av1_estimate_noise_from_single_plane_neon
+#define av1_estimate_noise_from_single_plane av1_estimate_noise_from_single_plane_c
 
 void av1_filter_intra_edge_c(uint8_t *p, int sz, int strength);
 void av1_filter_intra_edge_neon(uint8_t *p, int sz, int strength);
 #define av1_filter_intra_edge av1_filter_intra_edge_neon
 
 void av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride, TX_SIZE tx_size, const uint8_t *above, const uint8_t *left, int mode);
-void av1_filter_intra_predictor_neon(uint8_t *dst, ptrdiff_t stride, TX_SIZE tx_size, const uint8_t *above, const uint8_t *left, int mode);
-#define av1_filter_intra_predictor av1_filter_intra_predictor_neon
+#define av1_filter_intra_predictor av1_filter_intra_predictor_c
 
 void av1_fwd_txfm2d_16x16_c(const int16_t *input, int32_t *output, int stride, TX_TYPE tx_type, int bd);
 void av1_fwd_txfm2d_16x16_neon(const int16_t *input, int32_t *output, int stride, TX_TYPE tx_type, int bd);
@@ -442,8 +439,7 @@ void av1_highbd_dr_prediction_z1_neon(uint16_t *dst, ptrdiff_t stride, int bw, i
 #define av1_highbd_dr_prediction_z1 av1_highbd_dr_prediction_z1_neon
 
 void av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd);
-void av1_highbd_dr_prediction_z2_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd);
-#define av1_highbd_dr_prediction_z2 av1_highbd_dr_prediction_z2_neon
+#define av1_highbd_dr_prediction_z2 av1_highbd_dr_prediction_z2_c
 
 void av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
 void av1_highbd_dr_prediction_z3_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
@@ -549,7 +545,7 @@ void av1_highbd_upsample_intra_edge_neon(uint16_t *p, int sz, int bd);
 
 void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref, int width, int height, int stride, uint16_t *pred, int p_col, int p_row, int p_width, int p_height, int p_stride, int subsampling_x, int subsampling_y, int bd, ConvolveParams *conv_params, int16_t alpha, int16_t beta, int16_t gamma, int16_t delta);
 void av1_highbd_warp_affine_neon(const int32_t *mat, const uint16_t *ref, int width, int height, int stride, uint16_t *pred, int p_col, int p_row, int p_width, int p_height, int p_stride, int subsampling_x, int subsampling_y, int bd, ConvolveParams *conv_params, int16_t alpha, int16_t beta, int16_t gamma, int16_t delta);
-#define av1_highbd_warp_affine av1_highbd_warp_affine_neon
+#define av1_highbd_warp_affine av1_highbd_warp_affine_c
 
 void av1_highbd_wiener_convolve_add_src_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst, ptrdiff_t dst_stride, const int16_t *filter_x, int x_step_q4, const int16_t *filter_y, int y_step_q4, int w, int h, const WienerConvolveParams *conv_params, int bd);
 void av1_highbd_wiener_convolve_add_src_neon(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst, ptrdiff_t dst_stride, const int16_t *filter_x, int x_step_q4, const int16_t *filter_y, int y_step_q4, int w, int h, const WienerConvolveParams *conv_params, int bd);
