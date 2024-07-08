@@ -8,6 +8,12 @@ Date: Monday June 10 2024
 Branch: v3.9.1
 Commit: 8ad484f8a18ed1853c094e7d3a4e023b2a92df28
 
+Cherry-picks:
+53839ab1a3 disable av1_{highbd_,}dr_prediction_z2_neon w/armv7
+ceb91a8187 disable av1_filter_intra_predictor_neon w/armv7
+7b46bcbe54 disable av1_estimate_noise_from_single_plane_neon w/armv7
+686a01e54b disable av1_highbd_warp_affine_neon w/armv7
+
 Description:
 Contains the sources used to compile libaom.
 
