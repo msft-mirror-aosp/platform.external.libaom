@@ -188,7 +188,8 @@ void av1_cnn_batchnorm_c(float **image, int channels, int width, int height, int
 #define av1_cnn_batchnorm av1_cnn_batchnorm_c
 
 void av1_cnn_convolve_no_maxpool_padding_valid_c(const float **input, int in_width, int in_height, int in_stride, const CNN_LAYER_CONFIG *layer_config, float **output, int out_stride, int start_idx, int cstep, int channel_step);
-#define av1_cnn_convolve_no_maxpool_padding_valid av1_cnn_convolve_no_maxpool_padding_valid_c
+void av1_cnn_convolve_no_maxpool_padding_valid_neon(const float **input, int in_width, int in_height, int in_stride, const CNN_LAYER_CONFIG *layer_config, float **output, int out_stride, int start_idx, int cstep, int channel_step);
+#define av1_cnn_convolve_no_maxpool_padding_valid av1_cnn_convolve_no_maxpool_padding_valid_neon
 
 void av1_cnn_deconvolve_c(const float **input, int in_width, int in_height, int in_stride, const CNN_LAYER_CONFIG *layer_config, float **output, int out_stride);
 #define av1_cnn_deconvolve av1_cnn_deconvolve_c
@@ -255,24 +256,21 @@ void av1_dr_prediction_z1_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, c
 #define av1_dr_prediction_z1 av1_dr_prediction_z1_neon
 
 void av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int upsample_left, int dx, int dy);
-void av1_dr_prediction_z2_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_above, int upsample_left, int dx, int dy);
-#define av1_dr_prediction_z2 av1_dr_prediction_z2_neon
+#define av1_dr_prediction_z2 av1_dr_prediction_z2_c
 
 void av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_left, int dx, int dy);
 void av1_dr_prediction_z3_neon(uint8_t *dst, ptrdiff_t stride, int bw, int bh, const uint8_t *above, const uint8_t *left, int upsample_left, int dx, int dy);
 #define av1_dr_prediction_z3 av1_dr_prediction_z3_neon
 
 double av1_estimate_noise_from_single_plane_c(const uint8_t *src, int height, int width, int stride, int edge_thresh);
-double av1_estimate_noise_from_single_plane_neon(const uint8_t *src, int height, int width, int stride, int edge_thresh);
-#define av1_estimate_noise_from_single_plane av1_estimate_noise_from_single_plane_neon
+#define av1_estimate_noise_from_single_plane av1_estimate_noise_from_single_plane_c
 
 void av1_filter_intra_edge_c(uint8_t *p, int sz, int strength);
 void av1_filter_intra_edge_neon(uint8_t *p, int sz, int strength);
 #define av1_filter_intra_edge av1_filter_intra_edge_neon
 
 void av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride, TX_SIZE tx_size, const uint8_t *above, const uint8_t *left, int mode);
-void av1_filter_intra_predictor_neon(uint8_t *dst, ptrdiff_t stride, TX_SIZE tx_size, const uint8_t *above, const uint8_t *left, int mode);
-#define av1_filter_intra_predictor av1_filter_intra_predictor_neon
+#define av1_filter_intra_predictor av1_filter_intra_predictor_c
 
 void av1_fwd_txfm2d_16x16_c(const int16_t *input, int32_t *output, int stride, TX_TYPE tx_type, int bd);
 void av1_fwd_txfm2d_16x16_neon(const int16_t *input, int32_t *output, int stride, TX_TYPE tx_type, int bd);
@@ -437,13 +435,15 @@ void av1_highbd_dist_wtd_convolve_y_neon(const uint16_t *src, int src_stride, ui
 #define av1_highbd_dist_wtd_convolve_y av1_highbd_dist_wtd_convolve_y_neon
 
 void av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int dx, int dy, int bd);
-#define av1_highbd_dr_prediction_z1 av1_highbd_dr_prediction_z1_c
+void av1_highbd_dr_prediction_z1_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int dx, int dy, int bd);
+#define av1_highbd_dr_prediction_z1 av1_highbd_dr_prediction_z1_neon
 
 void av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_above, int upsample_left, int dx, int dy, int bd);
 #define av1_highbd_dr_prediction_z2 av1_highbd_dr_prediction_z2_c
 
 void av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
-#define av1_highbd_dr_prediction_z3 av1_highbd_dr_prediction_z3_c
+void av1_highbd_dr_prediction_z3_neon(uint16_t *dst, ptrdiff_t stride, int bw, int bh, const uint16_t *above, const uint16_t *left, int upsample_left, int dx, int dy, int bd);
+#define av1_highbd_dr_prediction_z3 av1_highbd_dr_prediction_z3_neon
 
 double av1_highbd_estimate_noise_from_single_plane_c(const uint16_t *src, int height, int width, int stride, int bit_depth, int edge_thresh);
 double av1_highbd_estimate_noise_from_single_plane_neon(const uint16_t *src, int height, int width, int stride, int bit_depth, int edge_thresh);
@@ -532,7 +532,8 @@ void av1_highbd_iwht4x4_1_add_c(const tran_low_t *input, uint8_t *dest, int dest
 #define av1_highbd_iwht4x4_1_add av1_highbd_iwht4x4_1_add_c
 
 int64_t av1_highbd_pixel_proj_error_c(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int xq[2], const sgr_params_type *params);
-#define av1_highbd_pixel_proj_error av1_highbd_pixel_proj_error_c
+int64_t av1_highbd_pixel_proj_error_neon(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int xq[2], const sgr_params_type *params);
+#define av1_highbd_pixel_proj_error av1_highbd_pixel_proj_error_neon
 
 void av1_highbd_quantize_fp_c(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan, int log_scale);
 void av1_highbd_quantize_fp_neon(const tran_low_t *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr, const int16_t *quant_ptr, const int16_t *quant_shift_ptr, tran_low_t *qcoeff_ptr, tran_low_t *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan, int log_scale);
@@ -544,7 +545,7 @@ void av1_highbd_upsample_intra_edge_neon(uint16_t *p, int sz, int bd);
 
 void av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref, int width, int height, int stride, uint16_t *pred, int p_col, int p_row, int p_width, int p_height, int p_stride, int subsampling_x, int subsampling_y, int bd, ConvolveParams *conv_params, int16_t alpha, int16_t beta, int16_t gamma, int16_t delta);
 void av1_highbd_warp_affine_neon(const int32_t *mat, const uint16_t *ref, int width, int height, int stride, uint16_t *pred, int p_col, int p_row, int p_width, int p_height, int p_stride, int subsampling_x, int subsampling_y, int bd, ConvolveParams *conv_params, int16_t alpha, int16_t beta, int16_t gamma, int16_t delta);
-#define av1_highbd_warp_affine av1_highbd_warp_affine_neon
+#define av1_highbd_warp_affine av1_highbd_warp_affine_c
 
 void av1_highbd_wiener_convolve_add_src_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst, ptrdiff_t dst_stride, const int16_t *filter_x, int x_step_q4, const int16_t *filter_y, int y_step_q4, int w, int h, const WienerConvolveParams *conv_params, int bd);
 void av1_highbd_wiener_convolve_add_src_neon(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst, ptrdiff_t dst_stride, const int16_t *filter_x, int x_step_q4, const int16_t *filter_y, int y_step_q4, int w, int h, const WienerConvolveParams *conv_params, int bd);

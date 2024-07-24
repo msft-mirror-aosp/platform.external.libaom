@@ -60,7 +60,6 @@ aom_av1_common_intrin_neon_i8mm = [
 ]
 
 aom_av1_common_intrin_sse2 = [
-    "av1/common/x86/cdef_block_sse2.c",
     "av1/common/x86/cfl_sse2.c",
     "av1/common/x86/convolve_2d_sse2.c",
     "av1/common/x86/convolve_sse2.c",
@@ -86,7 +85,6 @@ aom_av1_common_intrin_sse4_1 = [
 
 aom_av1_common_intrin_ssse3 = [
     "av1/common/x86/av1_inv_txfm_ssse3.c",
-    "av1/common/x86/cdef_block_ssse3.c",
     "av1/common/x86/cfl_ssse3.c",
     "av1/common/x86/highbd_convolve_2d_ssse3.c",
     "av1/common/x86/highbd_wiener_convolve_ssse3.c",
@@ -95,8 +93,18 @@ aom_av1_common_intrin_ssse3 = [
     "av1/common/x86/resize_ssse3.c",
 ]
 
+aom_av1_common_intrin_ssse3_x86 = [
+    "av1/common/x86/cdef_block_ssse3.c",
+]
+
 aom_av1_common_intrin_sve = [
+    "av1/common/arm/highbd_warp_plane_sve.c",
     "av1/common/arm/warp_plane_sve.c",
+]
+
+aom_av1_common_intrin_sve2 = [
+    "av1/common/arm/highbd_compound_convolve_sve2.c",
+    "av1/common/arm/highbd_convolve_sve2.c",
 ]
 
 aom_av1_common_intrin_vsx = [
@@ -188,6 +196,7 @@ aom_av1_encoder_intrin_neon = [
     "av1/encoder/arm/neon/av1_fwd_txfm2d_neon.c",
     "av1/encoder/arm/neon/av1_highbd_quantize_neon.c",
     "av1/encoder/arm/neon/av1_k_means_neon.c",
+    "av1/encoder/arm/neon/cnn_neon.c",
     "av1/encoder/arm/neon/encodetxb_neon.c",
     "av1/encoder/arm/neon/highbd_fwd_txfm_neon.c",
     "av1/encoder/arm/neon/highbd_pickrst_neon.c",
@@ -240,6 +249,11 @@ aom_av1_encoder_intrin_sse4_2 = [
 
 aom_av1_encoder_intrin_ssse3 = [
     "av1/encoder/x86/reconinter_enc_ssse3.c",
+]
+
+aom_av1_encoder_intrin_sve = [
+    "av1/encoder/arm/neon/av1_error_sve.c",
+    "av1/encoder/arm/neon/wedge_utils_sve.c",
 ]
 
 aom_av1_encoder_sources = [
@@ -339,8 +353,6 @@ aom_decoder_app_util_sources = [
 aom_dsp_common_asm_sse2 = [
     "aom_dsp/x86/aom_high_subpixel_8t_sse2.asm",
     "aom_dsp/x86/aom_high_subpixel_bilinear_sse2.asm",
-    "aom_dsp/x86/aom_subpixel_8t_sse2.asm",
-    "aom_dsp/x86/aom_subpixel_bilinear_sse2.asm",
     "aom_dsp/x86/highbd_intrapred_asm_sse2.asm",
     "aom_dsp/x86/intrapred_asm_sse2.asm",
     "aom_dsp/x86/inv_wht_sse2.asm",
@@ -390,7 +402,6 @@ aom_dsp_common_intrin_neon_i8mm = [
 aom_dsp_common_intrin_sse2 = [
     "aom_dsp/x86/aom_asm_stubs.c",
     "aom_dsp/x86/aom_convolve_copy_sse2.c",
-    "aom_dsp/x86/aom_subpixel_8t_intrin_sse2.c",
     "aom_dsp/x86/fft_sse2.c",
     "aom_dsp/x86/highbd_convolve_sse2.c",
     "aom_dsp/x86/highbd_intrapred_sse2.c",
@@ -410,6 +421,10 @@ aom_dsp_common_intrin_ssse3 = [
     "aom_dsp/x86/aom_subpixel_8t_intrin_ssse3.c",
     "aom_dsp/x86/highbd_convolve_ssse3.c",
     "aom_dsp/x86/intrapred_ssse3.c",
+]
+
+aom_dsp_common_intrin_sve = [
+    "aom_dsp/arm/highbd_convolve8_sve.c",
 ]
 
 aom_dsp_common_sources = [
@@ -440,12 +455,15 @@ aom_dsp_encoder_asm_sse2 = [
     "aom_dsp/x86/highbd_variance_impl_sse2.asm",
     "aom_dsp/x86/sad4d_sse2.asm",
     "aom_dsp/x86/sad_sse2.asm",
-    "aom_dsp/x86/subpel_variance_sse2.asm",
     "aom_dsp/x86/subtract_sse2.asm",
 ]
 
 aom_dsp_encoder_asm_sse2_x86_64 = [
     "aom_dsp/x86/ssim_sse2_x86_64.asm",
+]
+
+aom_dsp_encoder_asm_ssse3 = [
+    "aom_dsp/x86/subpel_variance_ssse3.asm",
 ]
 
 aom_dsp_encoder_asm_ssse3_x86_64 = [
@@ -459,6 +477,7 @@ aom_dsp_encoder_intrin_avx = [
 
 aom_dsp_encoder_intrin_avx2 = [
     "aom_dsp/flow_estimation/x86/corner_match_avx2.c",
+    "aom_dsp/flow_estimation/x86/disflow_avx2.c",
     "aom_dsp/x86/adaptive_quantize_avx2.c",
     "aom_dsp/x86/avg_intrin_avx2.c",
     "aom_dsp/x86/blk_sse_sum_avx2.c",
@@ -550,6 +569,14 @@ aom_dsp_encoder_intrin_ssse3 = [
     "aom_dsp/x86/masked_variance_intrin_ssse3.c",
     "aom_dsp/x86/quantize_ssse3.c",
     "aom_dsp/x86/variance_impl_ssse3.c",
+]
+
+aom_dsp_encoder_intrin_sve = [
+    "aom_dsp/arm/avg_sve.c",
+    "aom_dsp/arm/blk_sse_sum_sve.c",
+    "aom_dsp/arm/highbd_sse_sve.c",
+    "aom_dsp/arm/highbd_variance_sve.c",
+    "aom_dsp/arm/sum_squares_sve.c",
 ]
 
 aom_dsp_encoder_sources = [
@@ -731,28 +758,26 @@ cc_library_static {
 
         // configured to require the neon unit
         arm: {
-            neon: {
-                local_include_dirs: [
-                    "config/",
-                    "config/arm/",
-                ],
-                srcs: aom_av1_common_sources +
-                    aom_av1_decoder_sources +
-                    aom_dsp_common_sources +
-                    aom_dsp_decoder_sources +
-                    aom_mem_sources +
-                    aom_rtcd_sources +
-                    ["aom_ports/aarch32_cpudetect.c"] +
-                    aom_scale_sources +
-                    aom_sources +
-                    aom_util_sources +
-                    aom_av1_common_intrin_neon +
-                    aom_dsp_common_intrin_neon +
-                    aom_av1_encoder_intrin_neon +
-                    aom_av1_encoder_sources +
-                    aom_dsp_encoder_intrin_neon +
-                    aom_dsp_encoder_sources,
-            },
+            local_include_dirs: [
+                "config/",
+                "config/arm/",
+            ],
+            srcs: aom_av1_common_sources +
+                aom_av1_decoder_sources +
+                aom_dsp_common_sources +
+                aom_dsp_decoder_sources +
+                aom_mem_sources +
+                aom_rtcd_sources +
+                ["aom_ports/aarch32_cpudetect.c"] +
+                aom_scale_sources +
+                aom_sources +
+                aom_util_sources +
+                aom_av1_common_intrin_neon +
+                aom_dsp_common_intrin_neon +
+                aom_av1_encoder_intrin_neon +
+                aom_av1_encoder_sources +
+                aom_dsp_encoder_intrin_neon +
+                aom_dsp_encoder_sources,
         },
 
         x86_64: {
@@ -787,6 +812,7 @@ cc_library_static {
                 aom_av1_encoder_sources +
                 aom_dsp_encoder_asm_sse2 +
                 aom_dsp_encoder_asm_sse2_x86_64 +
+                aom_dsp_encoder_asm_ssse3 +
                 aom_dsp_encoder_asm_ssse3_x86_64 +
                 aom_dsp_encoder_intrin_sse2 +
                 aom_dsp_encoder_intrin_ssse3 +
@@ -817,12 +843,14 @@ cc_library_static {
                 aom_dsp_common_intrin_sse2 +
                 aom_av1_common_intrin_ssse3 +
                 aom_dsp_common_intrin_ssse3 +
+                aom_av1_common_intrin_ssse3_x86 +
                 aom_av1_encoder_asm_sse2 +
                 aom_av1_encoder_intrin_sse2 +
                 aom_av1_encoder_intrin_sse3 +
                 aom_av1_encoder_intrin_ssse3 +
                 aom_av1_encoder_sources +
                 aom_dsp_encoder_asm_sse2 +
+                aom_dsp_encoder_asm_ssse3 +
                 aom_dsp_encoder_intrin_sse2 +
                 aom_dsp_encoder_intrin_ssse3 +
                 aom_dsp_encoder_sources,
@@ -863,12 +891,10 @@ cc_fuzz {
     ],
     arch: {
         arm: {
-            neon: {
-                local_include_dirs: [
-                    "config/",
-                    "config/arm/",
-                ],
-            },
+            local_include_dirs: [
+                "config/",
+                "config/arm/",
+            ],
         },
 
         arm64: {
