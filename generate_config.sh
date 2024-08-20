@@ -125,7 +125,7 @@ gen_config_files arm "${toolchain}/armv7-linux-gcc.cmake ${all_platforms}"
 reset_dirs arm64
 gen_config_files arm64 "${toolchain}/arm64-linux-gcc.cmake ${all_platforms} \
   -DCONFIG_RUNTIME_CPU_DETECT=1 \
-  -DENABLE_ARM_CRC32=0 -DENABLE_NEON_DOTPROD=0 -DENABLE_NEON_I8MM=0"
+  -DENABLE_NEON_DOTPROD=0 -DENABLE_NEON_I8MM=0"
 
 reset_dirs riscv64
 gen_config_files riscv64 "${toolchain}/riscv-linux-gcc.cmake ${all_platforms}"
