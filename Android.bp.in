@@ -127,25 +127,6 @@ cc_library_static {
 }
 
 cc_library_static {
-    name: "libaom_neon_i8mm",
-    defaults: [ "libaom_defaults" ],
-    host_supported: true,
-    vendor_available: true,
-    visibility: ["//visibility:private"],
-
-    cflags: [
-        "-march=armv8.2-a+dotprod+i8mm",
-    ],
-
-    arch: {
-        arm64: {
-            srcs: aom_av1_common_intrin_neon_i8mm +
-                aom_dsp_common_intrin_neon_i8mm
-        },
-    },
-}
-
-cc_library_static {
     name: "libaom",
     defaults: [ "libaom_defaults" ],
     host_supported: true,
@@ -182,7 +163,6 @@ cc_library_static {
             whole_static_libs: [
                 "libaom_arm_crc32",
                 "libaom_neon_dotprod",
-                "libaom_neon_i8mm",
             ],
         },
 
