@@ -714,16 +714,11 @@ license {
     ],
 }
 
-cc_library_static {
-    name: "libaom",
-    host_supported: true,
-    vendor_available: true,
+cc_defaults {
+    name: "libaom_defaults",
+
     cflags: [
         "-O3",
-    ],
-
-    export_include_dirs: [
-        ".",
     ],
 
     min_sdk_version: "29",
@@ -738,6 +733,96 @@ cc_library_static {
                 "config/",
                 "config/arm64/",
             ],
+        },
+
+        // configured to require the neon unit
+        arm: {
+            local_include_dirs: [
+                "config/",
+                "config/arm/",
+            ],
+        },
+
+        x86_64: {
+            local_include_dirs: [
+                "config/",
+                "config/x86_64/",
+            ],
+        },
+
+        x86: {
+            local_include_dirs: [
+                "config/",
+                "config/x86/",
+            ],
+        },
+
+        riscv64: {
+            local_include_dirs: [
+                "config/",
+                "config/riscv64/",
+            ],
+        },
+    },
+}
+
+cc_library_static {
+    name: "libaom_arm_crc32",
+    defaults: ["libaom_defaults"],
+    host_supported: true,
+    vendor_available: true,
+    visibility: ["//visibility:private"],
+
+    cflags: [
+        "-march=armv8-a+crc",
+    ],
+
+    arch: {
+        arm64: {
+            srcs: aom_av1_encoder_intrin_arm_crc32,
+        },
+    },
+}
+
+cc_library_static {
+    name: "libaom_neon_dotprod",
+    defaults: ["libaom_defaults"],
+    host_supported: true,
+    vendor_available: true,
+    visibility: ["//visibility:private"],
+
+    cflags: [
+        "-march=armv8.2-a+dotprod",
+    ],
+
+    arch: {
+        arm64: {
+            srcs: aom_av1_common_intrin_neon_dotprod +
+                aom_av1_encoder_intrin_neon_dotprod +
+                aom_dsp_common_intrin_neon_dotprod +
+                aom_dsp_encoder_intrin_neon_dotprod,
+        },
+    },
+}
+
+cc_library_static {
+    name: "libaom",
+    defaults: ["libaom_defaults"],
+    host_supported: true,
+    vendor_available: true,
+
+    export_include_dirs: [
+        ".",
+    ],
+
+    min_sdk_version: "29",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+    ],
+
+    arch: {
+        arm64: {
             srcs: aom_av1_common_sources +
                 aom_av1_decoder_sources +
                 aom_dsp_common_sources +
@@ -754,14 +839,14 @@ cc_library_static {
                 aom_av1_encoder_sources +
                 aom_dsp_encoder_intrin_neon +
                 aom_dsp_encoder_sources,
+            whole_static_libs: [
+                "libaom_arm_crc32",
+                "libaom_neon_dotprod",
+            ],
         },
 
         // configured to require the neon unit
         arm: {
-            local_include_dirs: [
-                "config/",
-                "config/arm/",
-            ],
             srcs: aom_av1_common_sources +
                 aom_av1_decoder_sources +
                 aom_dsp_common_sources +
@@ -781,10 +866,6 @@ cc_library_static {
         },
 
         x86_64: {
-            local_include_dirs: [
-                "config/",
-                "config/x86_64/",
-            ],
             cflags: [
                 "-mssse3",
             ],
@@ -885,47 +966,11 @@ cc_library_static {
 
 cc_fuzz {
     name: "av1_dec_fuzzer",
+    defaults: ["libaom_defaults"],
     host_supported: true,
     srcs: [
         "examples/av1_dec_fuzzer.cc",
     ],
-    arch: {
-        arm: {
-            local_include_dirs: [
-                "config/",
-                "config/arm/",
-            ],
-        },
-
-        arm64: {
-            local_include_dirs: [
-                "config/",
-                "config/arm64/",
-            ],
-        },
-
-        x86: {
-            local_include_dirs: [
-                "config/",
-                "config/x86/",
-            ],
-        },
-
-        x86_64: {
-            local_include_dirs: [
-                "config/",
-                "config/x86_64/",
-            ],
-        },
-
-        riscv64: {
-            local_include_dirs: [
-                "config/",
-                "config/riscv64/",
-            ],
-        },
-
-    },
     static_libs: [
         "libaom",
     ],
