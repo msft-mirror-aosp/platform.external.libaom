@@ -95,7 +95,9 @@ cc_library_static {
     visibility: ["//visibility:private"],
 
     cflags: [
-        "-march=armv8-a+crc",
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +crc",
     ],
 
     arch: {
@@ -113,7 +115,9 @@ cc_library_static {
     visibility: ["//visibility:private"],
 
     cflags: [
-        "-march=armv8.2-a+dotprod",
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +dotprod",
     ],
 
     arch: {
