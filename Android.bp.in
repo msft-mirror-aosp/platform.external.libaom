@@ -156,6 +156,37 @@ cc_library_static {
 }
 
 cc_library_static {
+    name: "libaom_sve",
+    defaults: [ "libaom_defaults" ],
+    host_supported: true,
+    vendor_available: true,
+    visibility: ["//visibility:private"],
+
+    cflags: [
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +dotprod",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +i8mm",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +sve",
+    ],
+
+    arch: {
+        arm64: {
+            srcs: aom_av1_common_intrin_sve +
+                aom_av1_encoder_intrin_sve +
+                aom_dsp_common_intrin_sve +
+                aom_dsp_encoder_intrin_sve
+        },
+    },
+}
+
+cc_library_static {
     name: "libaom",
     defaults: [ "libaom_defaults" ],
     host_supported: true,
@@ -193,6 +224,7 @@ cc_library_static {
                 "libaom_arm_crc32",
                 "libaom_neon_dotprod",
                 "libaom_neon_i8mm",
+                "libaom_sve",
             ],
         },
 
