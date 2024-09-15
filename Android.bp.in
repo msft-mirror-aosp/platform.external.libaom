@@ -95,7 +95,9 @@ cc_library_static {
     visibility: ["//visibility:private"],
 
     cflags: [
-        "-march=armv8-a+crc",
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +crc",
     ],
 
     arch: {
@@ -113,7 +115,9 @@ cc_library_static {
     visibility: ["//visibility:private"],
 
     cflags: [
-        "-march=armv8.2-a+dotprod",
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +dotprod",
     ],
 
     arch: {
@@ -122,6 +126,31 @@ cc_library_static {
                 aom_av1_encoder_intrin_neon_dotprod +
                 aom_dsp_common_intrin_neon_dotprod +
                 aom_dsp_encoder_intrin_neon_dotprod
+        },
+    },
+}
+
+cc_library_static {
+    name: "libaom_neon_i8mm",
+    defaults: [ "libaom_defaults" ],
+    host_supported: true,
+    vendor_available: true,
+    visibility: ["//visibility:private"],
+
+    cflags: [
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +dotprod",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang -target-feature",
+        // This comment prevents bpfmt from sorting the flags incorrectly.
+        "-Xclang +i8mm",
+    ],
+
+    arch: {
+        arm64: {
+            srcs: aom_av1_common_intrin_neon_i8mm +
+                aom_dsp_common_intrin_neon_i8mm
         },
     },
 }
@@ -163,6 +192,7 @@ cc_library_static {
             whole_static_libs: [
                 "libaom_arm_crc32",
                 "libaom_neon_dotprod",
+                "libaom_neon_i8mm",
             ],
         },
 
