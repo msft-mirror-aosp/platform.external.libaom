@@ -305,7 +305,6 @@ cc_library_static {
                 aom_av1_encoder_asm_ssse3_x86_64 +
                 aom_av1_encoder_intrin_sse2 +
                 aom_av1_encoder_intrin_sse3 +
-                aom_av1_encoder_intrin_ssse3 +
                 aom_av1_encoder_sources +
                 aom_dsp_encoder_asm_sse2 +
                 aom_dsp_encoder_asm_sse2_x86_64 +
@@ -344,7 +343,6 @@ cc_library_static {
                 aom_av1_encoder_asm_sse2 +
                 aom_av1_encoder_intrin_sse2 +
                 aom_av1_encoder_intrin_sse3 +
-                aom_av1_encoder_intrin_ssse3 +
                 aom_av1_encoder_sources +
                 aom_dsp_encoder_asm_sse2 +
                 aom_dsp_encoder_asm_ssse3 +
