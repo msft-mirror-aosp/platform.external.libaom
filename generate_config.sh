@@ -123,7 +123,9 @@ reset_dirs arm
 gen_config_files arm "${toolchain}/armv7-linux-gcc.cmake ${all_platforms}"
 
 reset_dirs arm64
-gen_config_files arm64 "${toolchain}/arm64-linux-gcc.cmake ${all_platforms} \
+# Note clang is use to allow detection of SVE/SVE2; gcc as of version 13 is
+# missing the required arm_neon_sve_bridge.h header.
+gen_config_files arm64 "${toolchain}/arm64-linux-clang.cmake ${all_platforms} \
   -DCONFIG_RUNTIME_CPU_DETECT=1"
 
 reset_dirs riscv64
