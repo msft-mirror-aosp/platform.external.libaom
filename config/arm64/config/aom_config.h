@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Alliance for Open Media. All rights reserved
+ * Copyright (c) 2024, Alliance for Open Media. All rights reserved.
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -60,12 +60,12 @@
 #define CONFIG_RD_DEBUG 0
 #define CONFIG_REALTIME_ONLY 0
 #define CONFIG_RT_ML_PARTITIONING 0
-#define CONFIG_RUNTIME_CPU_DETECT 0
+#define CONFIG_RUNTIME_CPU_DETECT 1
 #define CONFIG_SALIENCY_MAP 0
 #define CONFIG_SHARED 0
 #define CONFIG_SIZE_LIMIT 1
-#define CONFIG_SPATIAL_RESAMPLING 1
 #define CONFIG_SPEED_STATS 0
+#define CONFIG_SVT_AV1 1
 #define CONFIG_TFLITE 0
 #define CONFIG_THREE_PASS 0
 #define CONFIG_TUNE_BUTTERAUGLI 0
@@ -74,14 +74,14 @@
 #define DECODE_HEIGHT_LIMIT 16384
 #define DECODE_WIDTH_LIMIT 16384
 #define FORCE_HIGHBITDEPTH_DECODING 0
-#define HAVE_ARM_CRC32 0
+#define HAVE_ARM_CRC32 1
 #define HAVE_AVX 0
 #define HAVE_AVX2 0
 #define HAVE_FEXCEPT 1
 #define HAVE_MMX 0
 #define HAVE_NEON 1
-#define HAVE_NEON_DOTPROD 0
-#define HAVE_NEON_I8MM 0
+#define HAVE_NEON_DOTPROD 1
+#define HAVE_NEON_I8MM 1
 #define HAVE_PTHREAD_H 1
 #define HAVE_SSE 0
 #define HAVE_SSE2 0
@@ -89,11 +89,10 @@
 #define HAVE_SSE4_1 0
 #define HAVE_SSE4_2 0
 #define HAVE_SSSE3 0
-#define HAVE_SVE 0
-#define HAVE_SVE2 0
+#define HAVE_SVE 1
+#define HAVE_SVE2 1
 #define HAVE_UNISTD_H 1
 #define HAVE_VSX 0
 #define HAVE_WXWIDGETS 0
-#define INLINE inline
 #define STATIC_LINK_JXL 0
 #endif  // AOM_CONFIG_H_

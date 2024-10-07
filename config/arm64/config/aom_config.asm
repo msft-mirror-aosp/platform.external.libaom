@@ -1,5 +1,5 @@
 ;
-; Copyright (c) 2024, Alliance for Open Media. All rights reserved
+; Copyright (c) 2024, Alliance for Open Media. All rights reserved.
 ;
 ; This source code is subject to the terms of the BSD 2 Clause License and
 ; the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -58,12 +58,12 @@ CONFIG_RD_COMMAND equ 0
 CONFIG_RD_DEBUG equ 0
 CONFIG_REALTIME_ONLY equ 0
 CONFIG_RT_ML_PARTITIONING equ 0
-CONFIG_RUNTIME_CPU_DETECT equ 0
+CONFIG_RUNTIME_CPU_DETECT equ 1
 CONFIG_SALIENCY_MAP equ 0
 CONFIG_SHARED equ 0
 CONFIG_SIZE_LIMIT equ 1
-CONFIG_SPATIAL_RESAMPLING equ 1
 CONFIG_SPEED_STATS equ 0
+CONFIG_SVT_AV1 equ 1
 CONFIG_TFLITE equ 0
 CONFIG_THREE_PASS equ 0
 CONFIG_TUNE_BUTTERAUGLI equ 0
@@ -72,14 +72,14 @@ CONFIG_WEBM_IO equ 1
 DECODE_HEIGHT_LIMIT equ 16384
 DECODE_WIDTH_LIMIT equ 16384
 FORCE_HIGHBITDEPTH_DECODING equ 0
-HAVE_ARM_CRC32 equ 0
+HAVE_ARM_CRC32 equ 1
 HAVE_AVX equ 0
 HAVE_AVX2 equ 0
 HAVE_FEXCEPT equ 1
 HAVE_MMX equ 0
 HAVE_NEON equ 1
-HAVE_NEON_DOTPROD equ 0
-HAVE_NEON_I8MM equ 0
+HAVE_NEON_DOTPROD equ 1
+HAVE_NEON_I8MM equ 1
 HAVE_PTHREAD_H equ 1
 HAVE_SSE equ 0
 HAVE_SSE2 equ 0
@@ -87,8 +87,8 @@ HAVE_SSE3 equ 0
 HAVE_SSE4_1 equ 0
 HAVE_SSE4_2 equ 0
 HAVE_SSSE3 equ 0
-HAVE_SVE equ 0
-HAVE_SVE2 equ 0
+HAVE_SVE equ 1
+HAVE_SVE2 equ 1
 HAVE_UNISTD_H equ 1
 HAVE_VSX equ 0
 HAVE_WXWIDGETS equ 0
