@@ -634,7 +634,9 @@ void av1_quantize_lp_neon(const int16_t *coeff_ptr, intptr_t n_coeffs, const int
 
 void av1_resize_and_extend_frame_c(const YV12_BUFFER_CONFIG *src, YV12_BUFFER_CONFIG *dst, const InterpFilter filter, const int phase, const int num_planes);
 void av1_resize_and_extend_frame_neon(const YV12_BUFFER_CONFIG *src, YV12_BUFFER_CONFIG *dst, const InterpFilter filter, const int phase, const int num_planes);
-#define av1_resize_and_extend_frame av1_resize_and_extend_frame_neon
+void av1_resize_and_extend_frame_neon_dotprod(const YV12_BUFFER_CONFIG *src, YV12_BUFFER_CONFIG *dst, const InterpFilter filter, const int phase, const int num_planes);
+void av1_resize_and_extend_frame_neon_i8mm(const YV12_BUFFER_CONFIG *src, YV12_BUFFER_CONFIG *dst, const InterpFilter filter, const int phase, const int num_planes);
+RTCD_EXTERN void (*av1_resize_and_extend_frame)(const YV12_BUFFER_CONFIG *src, YV12_BUFFER_CONFIG *dst, const InterpFilter filter, const int phase, const int num_planes);
 
 void av1_resize_horz_dir_c(const uint8_t *const input, int in_stride, uint8_t *intbuf, int height, int filtered_length, int width2);
 #define av1_resize_horz_dir av1_resize_horz_dir_c
@@ -647,11 +649,11 @@ void av1_round_shift_array_neon(int32_t *arr, int size, int bit);
 #define av1_round_shift_array av1_round_shift_array_neon
 
 int av1_selfguided_restoration_c(const uint8_t *dgd8, int width, int height,
-                                int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
-                                int sgr_params_idx, int bit_depth, int highbd);
+                                  int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
+                                  int sgr_params_idx, int bit_depth, int highbd);
 int av1_selfguided_restoration_neon(const uint8_t *dgd8, int width, int height,
-                                int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
-                                int sgr_params_idx, int bit_depth, int highbd);
+                                  int dgd_stride, int32_t *flt0, int32_t *flt1, int flt_stride,
+                                  int sgr_params_idx, int bit_depth, int highbd);
 #define av1_selfguided_restoration av1_selfguided_restoration_neon
 
 void av1_txb_init_levels_c(const tran_low_t *const coeff, const int width, const int height, uint8_t *const levels);
@@ -827,6 +829,9 @@ static void setup_rtcd_internal(void)
     if (flags & HAS_SVE2) av1_highbd_dist_wtd_convolve_y = av1_highbd_dist_wtd_convolve_y_sve2;
     av1_highbd_warp_affine = av1_highbd_warp_affine_neon;
     if (flags & HAS_SVE) av1_highbd_warp_affine = av1_highbd_warp_affine_sve;
+    av1_resize_and_extend_frame = av1_resize_and_extend_frame_neon;
+    if (flags & HAS_NEON_DOTPROD) av1_resize_and_extend_frame = av1_resize_and_extend_frame_neon_dotprod;
+    if (flags & HAS_NEON_I8MM) av1_resize_and_extend_frame = av1_resize_and_extend_frame_neon_i8mm;
     av1_warp_affine = av1_warp_affine_neon;
     if (flags & HAS_NEON_I8MM) av1_warp_affine = av1_warp_affine_neon_i8mm;
     if (flags & HAS_SVE) av1_warp_affine = av1_warp_affine_sve;
@@ -841,4 +846,4 @@ static void setup_rtcd_internal(void)
 }  // extern "C"
 #endif
 
-#endif
+#endif  // AV1_RTCD_H_
