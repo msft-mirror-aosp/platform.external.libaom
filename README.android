@@ -4,9 +4,9 @@ Version: v3.10.0
 License: BSD
 License File: libaom/LICENSE
 
-Date: Tuesday September 17 2024
-Branch: v3.10.0
-Commit: c2fe6bf370f7c14fbaf12884b76244a3cfd7c5fc
+Date: Tuesday November 19 2024
+Branch: v3.11.0
+Commit: d6f30ae474dd6c358f26de0a0fc26a0d7340a84c
 
 Cherry-picks:
 None
