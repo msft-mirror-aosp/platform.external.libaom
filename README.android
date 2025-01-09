@@ -1,12 +1,7 @@
 Name: libaom
 URL: https://aomedia.org
-Version: v3.11.0
 License: BSD
 License File: libaom/LICENSE
-
-Date: Tuesday November 19 2024
-Branch: v3.11.0
-Commit: d6f30ae474dd6c358f26de0a0fc26a0d7340a84c
 
 Cherry-picks:
 None
@@ -29,10 +24,7 @@ Please follow these steps to update libaom source code:
 
    ./generate_config.sh
 
-3. Update this file with any Version, Date, Branch, or Commit changes. The
-   version is in the file config/config/aom_version.h
-
-4. Commit the changes. The commit message should look like this and is printed
+3. Commit the changes. The commit message should look like this and is printed
    by update_libaom.sh:
    libaom: Pull from upstream
 
