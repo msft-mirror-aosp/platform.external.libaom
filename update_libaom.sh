@@ -76,17 +76,12 @@ git merge --no-commit $UPSTREAM_COMMIT
 # Get the current commit hash.
 hash=$(git log $UPSTREAM_COMMIT -1 --format="%H")
 
-# Update date and commit info in METADATA & README.android.
+# Update date and commit info in METADATA.
 sed -E -i'' \
   -e "s/^([[:space:]]+year:).*/\1 $(date +'%Y')/" \
   -e "s/^([[:space:]]+month:).*/\1 $(date +'%-m')/" \
   -e "s/^([[:space:]]+day:).*/\1 $(date +'%-d')/" \
   METADATA
-sed -E -i'' \
-  -e "s/^(Date:).*/\1 $(date +'%A %B %d %Y')/" \
-  -e "s/^(Branch:).*/\1 $GIT_BRANCH/" \
-  -e "s/^(Commit:).*/\1 $hash/" \
-  README.android
 
 git commit -a -v
 
