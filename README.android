@@ -1,12 +1,7 @@
 Name: libaom
 URL: https://aomedia.org
-Version: v3.11.0
 License: BSD
 License File: libaom/LICENSE
-
-Date: Tuesday November 19 2024
-Branch: v3.11.0
-Commit: d6f30ae474dd6c358f26de0a0fc26a0d7340a84c
 
 Cherry-picks:
 None
@@ -19,33 +14,23 @@ The libaom source is from aomedia.org:
 
 Please follow these steps to update libaom source code:
 
-1. Update libaom source tree. Look for "Current HEAD: <hash>" output to update
-   README.android. Look for "git log from upstream: <git log>" output to add
-   to the commit message.
+1. Set up build environment.
 
-   ./update_libaom.sh [branch name]
+   $ . build/envsetup.sh
+   $ lunch aosp_arm64-trunk_staging-eng
 
-2. Generate updated Android.bp and config files.
+2. Run external_updater.
 
-   ./generate_config.sh
+   $ tools/external_updater/updater.sh update --no-build --no-upload \
+     external/libaom
 
-3. Update this file with any Version, Date, Branch, or Commit changes. The
-   version is in the file config/config/aom_version.h
+   Note: If you have changes in an existing branch, use `--keep-local-changes`.
+         To update to a version other than the latest release tag, use
+         `--custom-version`.
 
-4. Commit the changes. The commit message should look like this and is printed
-   by update_libaom.sh:
-   libaom: Pull from upstream
+3. Update post_update.sh & Android.bp.in as needed.
 
-   Current HEAD: <hash>
+   Rerun `./post_update.sh` and amend the commit created by external_updater.
 
-   git log from upstream:
-   a6b2070 <git commit message 1>
-   08dabbc <git commit message 2>
-   c29fb02 <git commit message 3>
-
-Tools needed to build libaom:
-
-- generate_config.sh
-
-Generate config files that contain the source list for each platform.
-A list of prerequisites is at the top of generate_config.sh.
+   $ ./post_update.sh
+   $ git commit -a --amend --no-edit
