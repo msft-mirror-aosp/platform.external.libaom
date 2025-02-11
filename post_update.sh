@@ -97,16 +97,12 @@ all_platforms+=" -DCONFIG_AV1_ENCODER=1"
 all_platforms+=" -DCONFIG_AV1_HIGHBITDEPTH=1"
 all_platforms+=" -DCONFIG_MAX_DECODE_PROFILE=0"
 all_platforms+=" -DCONFIG_NORMAL_TILE_MODE=1"
-# Android requires ssse3. Simplify the build by disabling everything above that
-# and RTCD.
-all_platforms+=" -DENABLE_SSE4_1=0"
-all_platforms+=" -DCONFIG_RUNTIME_CPU_DETECT=0"
+all_platforms+=" -DCONFIG_PIC=1"
 
 toolchain="-DCMAKE_TOOLCHAIN_FILE=${SRC}/build/cmake/toolchains"
 
 reset_dirs x86
-gen_config_files x86 \
-  "${toolchain}/i686-linux-gcc.cmake ${all_platforms} -DCONFIG_PIC=1"
+gen_config_files x86 "${toolchain}/i686-linux-gcc.cmake ${all_platforms}"
 
 # libaom_srcs.gni and aom_version.h are shared.
 cp libaom_srcs.gni "${BASE}"
@@ -116,13 +112,13 @@ reset_dirs x86_64
 gen_config_files x86_64 "${all_platforms}"
 
 reset_dirs arm
-gen_config_files arm "${toolchain}/armv7-linux-gcc.cmake ${all_platforms}"
+gen_config_files arm "${toolchain}/armv7-linux-gcc.cmake ${all_platforms} \
+  -DCONFIG_RUNTIME_CPU_DETECT=0"
 
 reset_dirs arm64
-# Note clang is use to allow detection of SVE/SVE2; gcc as of version 13 is
+# Note clang is used to allow detection of SVE/SVE2; gcc as of version 13 is
 # missing the required arm_neon_sve_bridge.h header.
-gen_config_files arm64 "${toolchain}/arm64-linux-clang.cmake ${all_platforms} \
-  -DCONFIG_RUNTIME_CPU_DETECT=1"
+gen_config_files arm64 "${toolchain}/arm64-linux-clang.cmake ${all_platforms}"
 
 reset_dirs riscv64
 gen_config_files riscv64 "${toolchain}/riscv-linux-gcc.cmake ${all_platforms}"
