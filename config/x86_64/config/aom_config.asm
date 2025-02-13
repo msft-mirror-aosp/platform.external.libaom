@@ -48,7 +48,7 @@
 %define CONFIG_RD_DEBUG 0
 %define CONFIG_REALTIME_ONLY 0
 %define CONFIG_RT_ML_PARTITIONING 0
-%define CONFIG_RUNTIME_CPU_DETECT 0
+%define CONFIG_RUNTIME_CPU_DETECT 1
 %define CONFIG_SALIENCY_MAP 0
 %define CONFIG_SHARED 0
 %define CONFIG_SIZE_LIMIT 1
@@ -63,8 +63,8 @@
 %define DECODE_WIDTH_LIMIT 16384
 %define FORCE_HIGHBITDEPTH_DECODING 0
 %define HAVE_ARM_CRC32 0
-%define HAVE_AVX 0
-%define HAVE_AVX2 0
+%define HAVE_AVX 1
+%define HAVE_AVX2 1
 %define HAVE_FEXCEPT 1
 %define HAVE_MMX 1
 %define HAVE_NEON 0
@@ -74,8 +74,8 @@
 %define HAVE_SSE 1
 %define HAVE_SSE2 1
 %define HAVE_SSE3 1
-%define HAVE_SSE4_1 0
-%define HAVE_SSE4_2 0
+%define HAVE_SSE4_1 1
+%define HAVE_SSE4_2 1
 %define HAVE_SSSE3 1
 %define HAVE_SVE 0
 %define HAVE_SVE2 0
