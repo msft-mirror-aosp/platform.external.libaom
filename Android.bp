@@ -732,6 +732,17 @@ cc_defaults {
         "com.android.media.swcodec",
     ],
 
+    target: {
+        android: {
+            sanitize: {
+                cfi: true,
+                config: {
+                    cfi_assembly_support: true,
+                },
+            },
+        },
+    },
+
     arch: {
         arm64: {
             local_include_dirs: [
