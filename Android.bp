@@ -66,6 +66,10 @@ aom_av1_common_intrin_neon_i8mm = [
     "av1/common/arm/warp_plane_neon_i8mm.c",
 ]
 
+aom_av1_common_intrin_rvv = [
+    "av1/common/riscv/cdef_block_rvv.c",
+]
+
 aom_av1_common_intrin_sse2 = [
     "av1/common/x86/cfl_sse2.c",
     "av1/common/x86/convolve_2d_sse2.c",
@@ -550,7 +554,6 @@ aom_dsp_encoder_intrin_sse2 = [
     "aom_dsp/x86/highbd_quantize_intrin_sse2.c",
     "aom_dsp/x86/highbd_subtract_sse2.c",
     "aom_dsp/x86/highbd_variance_sse2.c",
-    "aom_dsp/x86/jnt_sad_sse2.c",
     "aom_dsp/x86/quantize_sse2.c",
     "aom_dsp/x86/sum_squares_sse2.c",
     "aom_dsp/x86/variance_sse2.c",
@@ -567,7 +570,6 @@ aom_dsp_encoder_intrin_sse4_1 = [
 ]
 
 aom_dsp_encoder_intrin_ssse3 = [
-    "aom_dsp/x86/jnt_variance_ssse3.c",
     "aom_dsp/x86/masked_sad_intrin_ssse3.c",
     "aom_dsp/x86/masked_variance_intrin_ssse3.c",
     "aom_dsp/x86/quantize_ssse3.c",
@@ -618,6 +620,7 @@ aom_encoder_app_util_sources = [
     "common/warnings.c",
     "common/y4minput.c",
     "examples/encoder_util.c",
+    "examples/multilayer_metadata.cc",
 ]
 
 aom_encoder_stats_sources = [
@@ -1173,11 +1176,13 @@ cc_library_static {
             ],
             cflags: [
             ],
-            srcs: aom_av1_common_sources +
+            srcs: aom_av1_common_intrin_rvv +
+                aom_av1_common_sources +
                 aom_av1_decoder_sources +
                 aom_dsp_common_sources +
                 aom_dsp_decoder_sources +
                 aom_mem_sources +
+                ["aom_ports/riscv_cpudetect.c"] +
                 aom_rtcd_sources +
                 aom_scale_sources +
                 aom_sources +

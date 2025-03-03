@@ -98,12 +98,6 @@ void aom_highbd_comp_avg_upsampled_pred_c(MACROBLOCKD *xd, const struct AV1Commo
                                                             int height, int subpel_x_q3, int subpel_y_q3, const uint8_t *ref8, int ref_stride, int bd, int subpel_search);
 #define aom_highbd_comp_avg_upsampled_pred aom_highbd_comp_avg_upsampled_pred_c
 
-void aom_highbd_dist_wtd_comp_avg_upsampled_pred_c(MACROBLOCKD *xd, const struct AV1Common *const cm, int mi_row, int mi_col,
-                                                                const MV *const mv, uint8_t *comp_pred8, const uint8_t *pred8, int width,
-                                                                int height, int subpel_x_q3, int subpel_y_q3, const uint8_t *ref8,
-                                                                int ref_stride, int bd, const DIST_WTD_COMP_PARAMS *jcp_param, int subpel_search);
-#define aom_highbd_dist_wtd_comp_avg_upsampled_pred aom_highbd_dist_wtd_comp_avg_upsampled_pred_c
-
 void aom_highbd_upsampled_pred_c(MACROBLOCKD *xd, const struct AV1Common *const cm, int mi_row, int mi_col,
                                                    const MV *const mv, uint8_t *comp_pred8, int width, int height, int subpel_x_q3,
                                                    int subpel_y_q3, const uint8_t *ref8, int ref_stride, int bd, int subpel_search);
@@ -522,37 +516,48 @@ void av1_wiener_convolve_add_src_c(const uint8_t *src, ptrdiff_t src_stride, uin
 #define av1_wiener_convolve_add_src av1_wiener_convolve_add_src_c
 
 void cdef_copy_rect8_16bit_to_16bit_c(uint16_t *dst, int dstride, const uint16_t *src, int sstride, int width, int height);
-#define cdef_copy_rect8_16bit_to_16bit cdef_copy_rect8_16bit_to_16bit_c
+void cdef_copy_rect8_16bit_to_16bit_rvv(uint16_t *dst, int dstride, const uint16_t *src, int sstride, int width, int height);
+#define cdef_copy_rect8_16bit_to_16bit cdef_copy_rect8_16bit_to_16bit_rvv
 
 void cdef_copy_rect8_8bit_to_16bit_c(uint16_t *dst, int dstride, const uint8_t *src, int sstride, int width, int height);
-#define cdef_copy_rect8_8bit_to_16bit cdef_copy_rect8_8bit_to_16bit_c
+void cdef_copy_rect8_8bit_to_16bit_rvv(uint16_t *dst, int dstride, const uint8_t *src, int sstride, int width, int height);
+#define cdef_copy_rect8_8bit_to_16bit cdef_copy_rect8_8bit_to_16bit_rvv
 
 void cdef_filter_16_0_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_16_0 cdef_filter_16_0_c
+void cdef_filter_16_0_rvv(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_0 cdef_filter_16_0_rvv
 
 void cdef_filter_16_1_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_16_1 cdef_filter_16_1_c
+void cdef_filter_16_1_rvv(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_1 cdef_filter_16_1_rvv
 
 void cdef_filter_16_2_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_16_2 cdef_filter_16_2_c
+void cdef_filter_16_2_rvv(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_2 cdef_filter_16_2_rvv
 
 void cdef_filter_16_3_c(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_16_3 cdef_filter_16_3_c
+void cdef_filter_16_3_rvv(void *dst16, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_16_3 cdef_filter_16_3_rvv
 
 void cdef_filter_8_0_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_8_0 cdef_filter_8_0_c
+void cdef_filter_8_0_rvv(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_0 cdef_filter_8_0_rvv
 
 void cdef_filter_8_1_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_8_1 cdef_filter_8_1_c
+void cdef_filter_8_1_rvv(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_1 cdef_filter_8_1_rvv
 
 void cdef_filter_8_2_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_8_2 cdef_filter_8_2_c
+void cdef_filter_8_2_rvv(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_2 cdef_filter_8_2_rvv
 
 void cdef_filter_8_3_c(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
-#define cdef_filter_8_3 cdef_filter_8_3_c
+void cdef_filter_8_3_rvv(void *dst8, int dstride, const uint16_t *in, int pri_strength, int sec_strength, int dir, int pri_damping, int sec_damping, int coeff_shift, int block_width, int block_height);
+#define cdef_filter_8_3 cdef_filter_8_3_rvv
 
 int cdef_find_dir_c(const uint16_t *img, int stride, int32_t *var, int coeff_shift);
-#define cdef_find_dir cdef_find_dir_c
+int cdef_find_dir_rvv(const uint16_t *img, int stride, int32_t *var, int coeff_shift);
+#define cdef_find_dir cdef_find_dir_rvv
 
 void cdef_find_dir_dual_c(const uint16_t *img1, const uint16_t *img2, int stride, int32_t *var1, int32_t *var2, int coeff_shift, int *out1, int *out2);
 #define cdef_find_dir_dual cdef_find_dir_dual_c
@@ -586,11 +591,14 @@ cfl_subtract_average_fn cfl_get_subtract_average_fn_c(TX_SIZE tx_size);
 
 void av1_rtcd(void);
 
-#include "config/aom_config.h"
-
 #ifdef RTCD_C
+#include "aom_ports/riscv.h"
 static void setup_rtcd_internal(void)
 {
+    int flags = riscv_simd_caps();
+
+    (void)flags;
+
 }
 #endif
 
