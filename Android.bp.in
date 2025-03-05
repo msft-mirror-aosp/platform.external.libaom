@@ -489,11 +489,13 @@ cc_library_static {
             ],
             cflags: [
             ],
-            srcs: aom_av1_common_sources +
+            srcs: aom_av1_common_intrin_rvv +
+                aom_av1_common_sources +
                 aom_av1_decoder_sources +
                 aom_dsp_common_sources +
                 aom_dsp_decoder_sources +
                 aom_mem_sources +
+                ["aom_ports/riscv_cpudetect.c"] +
                 aom_rtcd_sources +
                 aom_scale_sources +
                 aom_sources +
