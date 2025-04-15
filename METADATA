@@ -13,12 +13,12 @@ third_party {
   license_note: "would be NOTICE save for Alliance for Open Media patent license:\n   libaom/PATENTS,\n and in headers for 930 other files like:\n   config/arm/config/aom_config.asm\n   config/arm/config/aom_config.c\n   ... \n   tools/txfm_analyzer/txfm_graph.h\n   tools/wrap-commit-msg.py"
   last_upgrade_date {
     year: 2025
-    month: 2
-    day: 21
+    month: 4
+    day: 14
   }
   identifier {
     type: "Git"
     value: "https://aomedia.googlesource.com/aom/"
-    version: "v3.12.0"
+    version: "v3.12.1"
   }
 }
