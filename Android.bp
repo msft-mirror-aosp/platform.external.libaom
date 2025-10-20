@@ -68,6 +68,8 @@ aom_av1_common_intrin_neon_i8mm = [
 
 aom_av1_common_intrin_rvv = [
     "av1/common/riscv/cdef_block_rvv.c",
+    "av1/common/riscv/convolve_rvv.c",
+    "av1/common/riscv/highbd_convolve_rvv.c",
 ]
 
 aom_av1_common_intrin_sse2 = [
