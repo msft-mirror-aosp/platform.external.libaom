@@ -19,6 +19,7 @@ third_party {
   identifier {
     type: "Git"
     value: "https://aomedia.googlesource.com/aom/"
-    version: "v3.13.1"
+    version: "d772e334cc724105040382a977ebb10dfd393293"
+    closest_version: "v3.13.1"
   }
 }
